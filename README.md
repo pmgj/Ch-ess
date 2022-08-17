@@ -1,2 +1,2 @@
-# Ch-ess
+# Chess
 This repository implements the chess board game.
