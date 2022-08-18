@@ -90,6 +90,8 @@ public class Endpoint {
                 break;
             default:
                 System.out.println(String.format("Close code %d incorrect", reason.getCloseCode().getCode()));
+                s1 = null;
+                s2 = null;
         }
     }
 

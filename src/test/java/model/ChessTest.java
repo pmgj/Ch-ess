@@ -1,6 +1,5 @@
 package model;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class ChessTest {
@@ -9,7 +8,7 @@ public class ChessTest {
     public void testMove() {
         System.out.println("testMove");
         Chess c = new Chess();
-        MoveResult m;
+        // MoveResult m;
 
         c.printBoard();
 
