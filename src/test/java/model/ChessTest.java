@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 public class ChessTest {
 
     @Test
-    public void testMove() {
+    public void testScholarsMate() {
         System.out.println("testMove");
         Chess c = new Chess();
         MoveResult m;
@@ -19,6 +19,36 @@ public class ChessTest {
         try {
             m = c.move(Player.PLAYER1, new Cell(6, 4), new Cell(4, 4));
             Assertions.assertSame(Winner.NONE, m.getWinner());
+        } catch (Exception ex) {
+        }
+        try {
+            m = c.move(Player.PLAYER2, new Cell(1, 4), new Cell(3, 4));
+            Assertions.assertSame(Winner.NONE, m.getWinner());
+        } catch (Exception ex) {
+        }
+        try {
+            m = c.move(Player.PLAYER1, new Cell(7, 3), new Cell(3, 7));
+            Assertions.assertSame(Winner.NONE, m.getWinner());
+        } catch (Exception ex) {
+        }
+        try {
+            m = c.move(Player.PLAYER2, new Cell(0, 1), new Cell(2, 2));
+            Assertions.assertSame(Winner.NONE, m.getWinner());
+        } catch (Exception ex) {
+        }
+        try {
+            m = c.move(Player.PLAYER1, new Cell(7, 5), new Cell(4, 2));
+            Assertions.assertSame(Winner.NONE, m.getWinner());
+        } catch (Exception ex) {
+        }
+        try {
+            m = c.move(Player.PLAYER2, new Cell(0, 6), new Cell(2, 5));
+            Assertions.assertSame(Winner.NONE, m.getWinner());
+        } catch (Exception ex) {
+        }
+        try {
+            m = c.move(Player.PLAYER1, new Cell(3, 7), new Cell(1, 5));
+            Assertions.assertSame(Winner.PLAYER1, m.getWinner());
         } catch (Exception ex) {
         }
         c.printBoard();

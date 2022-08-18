@@ -1,6 +1,7 @@
 package controller;
 
 import java.io.IOException;
+
 import jakarta.websocket.CloseReason;
 import jakarta.websocket.EncodeException;
 import jakarta.websocket.OnClose;
@@ -9,7 +10,6 @@ import jakarta.websocket.OnOpen;
 import jakarta.websocket.Session;
 import jakarta.websocket.server.ServerEndpoint;
 import model.Cell;
-import model.CellState;
 import model.Chess;
 import model.MoveResult;
 import model.Player;
@@ -63,9 +63,11 @@ public class Endpoint {
         try {
             MoveResult ret = game.move(p, beginCell, endCell);
             if (ret.getWinner() == Winner.NONE) {
-                sendMessage(new Message(ConnectionType.MESSAGE, game.getTurn(), beginCell, endCell));
+                s1.getBasicRemote().sendObject(new Message(ConnectionType.MESSAGE, game.getTurn(), bc1, ec1));
+                s2.getBasicRemote().sendObject(new Message(ConnectionType.MESSAGE, game.getTurn(), bc2, ec2));
             } else {
-                sendMessage(new Message(ConnectionType.ENDGAME, ret.getWinner(), beginCell, endCell));
+                s1.getBasicRemote().sendObject(new Message(ConnectionType.ENDGAME, ret.getWinner(), bc1, ec1));
+                s2.getBasicRemote().sendObject(new Message(ConnectionType.ENDGAME, ret.getWinner(), bc2, ec2));
             }
         } catch (Exception ex) {
             // session.getBasicRemote().sendObject(new Message(ConnectionType.ERROR,
@@ -98,10 +100,5 @@ public class Endpoint {
                 s1 = null;
                 s2 = null;
         }
-    }
-
-    private void sendMessage(Message msg) throws EncodeException, IOException {
-        s1.getBasicRemote().sendObject(msg);
-        s2.getBasicRemote().sendObject(msg);
     }
 }
