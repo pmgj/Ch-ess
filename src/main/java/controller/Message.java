@@ -1,5 +1,6 @@
 package controller;
 
+import model.Cell;
 import model.CellState;
 import model.Player;
 import model.Winner;
@@ -9,6 +10,8 @@ public class Message {
     private Player turn;
     private CellState[][] board;
     private Winner winner;
+    private Cell beginCell;
+    private Cell endCell;
 
     public Message() {
         
@@ -25,10 +28,23 @@ public class Message {
         this.board = board;
     }
 
-    public Message(ConnectionType type, Winner win, CellState[][] board) {
+    public Message(ConnectionType type, Player turn, Cell beginCell, Cell endCell) {
+        this.type = type;
+        this.turn = turn;
+        this.beginCell = beginCell;
+        this.endCell = endCell;
+    }
+
+    public Message(ConnectionType type, Winner win, Cell beginCell, Cell endCell) {
         this.type = type;
         this.winner = win;
-        this.board = board;
+        this.beginCell = beginCell;
+        this.endCell = endCell;
+    }
+
+    public Message(ConnectionType type, Winner win) {
+        this.type = type;
+        this.winner = win;
     }
     
     public ConnectionType getType() {
@@ -61,5 +77,21 @@ public class Message {
 
     public void setWinner(Winner winner) {
         this.winner = winner;
+    }
+
+    public Cell getBeginCell() {
+        return beginCell;
+    }
+
+    public void setBeginCell(Cell beginCell) {
+        this.beginCell = beginCell;
+    }
+
+    public Cell getEndCell() {
+        return endCell;
+    }
+
+    public void setEndCell(Cell endCell) {
+        this.endCell = endCell;
     }
 }

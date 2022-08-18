@@ -66,17 +66,14 @@ class GUI {
             }
         }
     }
-    movePiece2(begin, end) {
-        let msg = { type: 1, turn: this.turn, begin: { row: begin.parentNode.rowIndex, col: begin.cellIndex }, end: { row: end.parentNode.rowIndex, col: end.cellIndex } };
-        this.ws.send(JSON.stringify(msg));
-        this.turn = (this.turn + 1) % 2;
-        let tmp = begin.firstChild.cloneNode(true);
-        if (end.firstChild) {
-            end.removeChild(end.firstChild);
-        }
-        end.appendChild(tmp);
-        begin.removeChild(begin.firstChild);
-        this.turnMessage();
+    getTableData({ x, y }) {
+        return this.table.rows[x].cells[y];
+    }
+    movePiece(begin, end) {
+        let bTD = this.getTableData(begin);
+        let eTD = this.getTableData(end);
+        let img = bTD.firstChild;
+        eTD.appendChild(img);
     }
     coordinates(tableData) {
         return new Cell(tableData.parentNode.rowIndex, tableData.cellIndex);
@@ -87,28 +84,13 @@ class GUI {
         if (this.origin) {
             let msg = { beginCell: this.coordinates(this.origin), endCell: this.coordinates(td) };
             this.ws.send(JSON.stringify(msg));
+            this.origin = null;
             return;
         }
         if (piece !== this.turn) {
             return;
         }
         this.origin = td;
-
-        // if (this.origin === null) {
-        //     if (piece === this.currentTurn && this.turn === this.currentTurn && td.firstChild !== null) {
-        //         td.className = "selected";
-        //         posicoesPossiveis(td);
-        //         this.origin = td;
-        //     }
-        // } else {
-        //     if (td.className === "selected") {
-        //         this.unselectCells();
-        //         if (this.origin !== td) {
-        //             this.movePiece2(this.origin, td);
-        //         }
-        //         this.origin = null;
-        //     }
-        // }
     }
     onOpen() {
         this.writeResponse("Waiting opponent...");
@@ -124,8 +106,8 @@ class GUI {
                 if (data.board) {
                     this.printBoard(data.board);
                 } else {
-                    let begin = data.begin;
-                    let end = data.end;
+                    let begin = data.beginCell;
+                    let end = data.endCell;
                     this.movePiece(begin, end);
                 }
                 this.turnMessage();
@@ -138,7 +120,6 @@ class GUI {
                 this.ws.close();
                 break;
         }
-        // this.setEvents();
     }
     onClose() {
         this.writeResponse("Connection closed.");

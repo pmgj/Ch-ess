@@ -218,12 +218,12 @@ public class Chess {
                 if (getPiece(cell) == cs) {
                     List<Cell> moves = showPossibleMoves(cell);
                     if (!moves.isEmpty()) {
-                        return true;
+                        return false;
                     }
                 }
             }
         }
-        return false;
+        return true;
     }
 
     private boolean isCheck(Player player) {
@@ -256,23 +256,26 @@ public class Chess {
             Chess chess = new Chess();
             pm.forEach(m -> {
                 int dr = m.getX(), dc = m.getY();
-                CellState[][] boardCopy = board.clone();
+
+                CellState[][] boardCopy = new CellState[rows][cols];
+                for(int i = 0; i < board.length; i++) {
+                    CellState[] row = board[i];
+                    System.arraycopy(row, 0, boardCopy[i], 0, board.length);
+                }        
+
                 boardCopy[dr][dc] = boardCopy[or][oc];
                 boardCopy[or][oc] = CellState.EMPTY;
                 chess.setBoard(boardCopy);
-                boolean notInCheckCondition = !chess.isCheck(turn); // The new movement does not create a check
+                // The new movement does not create a check
+                boolean notInCheckCondition = !chess.isCheck(turn);
                 boolean isTwoStepKing = bIsKing && Math.abs(oc - dc) == 2;
-                boolean kingNotInCheckCondition = !(isTwoStepKing && check); // Castling is allowed if king is not in
-                                                                             // check
+                // Castling is allowed if king is not in check
+                boolean kingNotInCheckCondition = !(isTwoStepKing && check);
                 boolean middleSquareAllowed = ret.stream().filter(elem -> elem.equals(new Cell(or, (oc + dc) / 2)))
                         .count() > 0;
-                boolean middleSquareNotInCheckCondition = !(isTwoStepKing && !middleSquareAllowed); // Castling is
-                                                                                                    // allowed if the
-                                                                                                    // king does not
-                                                                                                    // pass through a
-                                                                                                    // square that is
-                                                                                                    // attacked by an
-                                                                                                    // enemy piece
+                // Castling is allowed if the king does not pass through a square that is
+                // attacked by an enemy piece
+                boolean middleSquareNotInCheckCondition = !(isTwoStepKing && !middleSquareAllowed);
                 if (notInCheckCondition && kingNotInCheckCondition && middleSquareNotInCheckCondition) {
                     ret.add(m);
                 }
@@ -506,5 +509,11 @@ public class Chess {
             }
         }
         return transMatrix;
+    }
+
+    public Cell getRotatedCell(Cell cell) {
+        int or = rows - cell.getX() - 1;
+        int oc = cols - cell.getY() - 1;
+        return new Cell(or, oc);
     }
 }

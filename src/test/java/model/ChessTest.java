@@ -1,5 +1,6 @@
 package model;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class ChessTest {
@@ -8,20 +9,20 @@ public class ChessTest {
     public void testMove() {
         System.out.println("testMove");
         Chess c = new Chess();
-        // MoveResult m;
+        MoveResult m;
 
+        try {
+            m = c.move(Player.PLAYER1, new Cell(5, 0), new Cell(4, 1));
+            Assertions.fail();
+        } catch (Exception ex) {
+        }
+        try {
+            m = c.move(Player.PLAYER1, new Cell(6, 4), new Cell(4, 4));
+            Assertions.assertSame(Winner.NONE, m.getWinner());
+        } catch (Exception ex) {
+        }
         c.printBoard();
 
-        // try {
-        //     m = c.move(Player.PLAYER1, new Cell(5, 0), new Cell(4, 1));
-        //     Assertions.fail();
-        // } catch (Exception ex) {
-        // }
-        // try {
-        //     m = c.move(Player.PLAYER1, new Cell(6, 4), new Cell(5, 4));
-        //     Assertions.assertSame(Winner.NONE, m.getWinner());
-        // } catch (Exception ex) {
-        // }
         // Assert.assertSame(Move.VALID, m.getMove());
         // m = c.move(Player.PLAYER1, new Cell(5, 2), new Cell(4, 3));
         // Assert.assertSame(Move.VALID, m.getMove());

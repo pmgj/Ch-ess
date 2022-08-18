@@ -31,7 +31,10 @@ public class Endpoint {
             game = new Chess();
             s2 = session;
             s2.getBasicRemote().sendObject(new Message(ConnectionType.OPEN, Player.PLAYER2));
-            sendMessage(new Message(ConnectionType.MESSAGE, game.getTurn(), game.getBoard()));
+            Message msg = new Message(ConnectionType.MESSAGE, game.getTurn(), game.getBoard());
+            s1.getBasicRemote().sendObject(msg);
+            msg.setBoard(game.rotateBoard());
+            s2.getBasicRemote().sendObject(msg);
         } else {
             session.close();
         }
@@ -39,32 +42,34 @@ public class Endpoint {
 
     @OnMessage
     public void onMessage(Session session, MoveMessage message) throws IOException, EncodeException {
+        Cell bc1, bc2, ec1, ec2;
         Player p;
         Cell beginCell = message.getBeginCell(), endCell = message.getEndCell();
         if (session == s1) {
             p = Player.PLAYER1;
+            bc1 = beginCell;
+            ec1 = endCell;
+            bc2 = game.getRotatedCell(beginCell);
+            ec2 = game.getRotatedCell(endCell);
         } else {
             p = Player.PLAYER2;
-            CellState[][] board = game.getBoard();
-            int rows = board.length, cols = board[0].length;
-            int or = rows - beginCell.getX() - 1;
-            int oc = cols - beginCell.getY() - 1;
-            int dr = rows - endCell.getX() - 1;
-            int dc = cols - endCell.getY() - 1;
-            beginCell.setX(or);
-            beginCell.setY(oc);
-            endCell.setX(dr);
-            endCell.setY(dc);
+            bc2 = beginCell;
+            ec2 = endCell;
+            beginCell = game.getRotatedCell(beginCell);
+            endCell = game.getRotatedCell(endCell);
+            bc1 = beginCell;
+            ec1 = endCell;
         }
         try {
             MoveResult ret = game.move(p, beginCell, endCell);
             if (ret.getWinner() == Winner.NONE) {
-                sendMessage(new Message(ConnectionType.MESSAGE, game.getTurn(), game.getBoard()));
+                sendMessage(new Message(ConnectionType.MESSAGE, game.getTurn(), beginCell, endCell));
             } else {
-                sendMessage(new Message(ConnectionType.ENDGAME, ret.getWinner(), game.getBoard()));
+                sendMessage(new Message(ConnectionType.ENDGAME, ret.getWinner(), beginCell, endCell));
             }
         } catch (Exception ex) {
-//            session.getBasicRemote().sendObject(new Message(ConnectionType.ERROR, ex.getMessage()));
+            // session.getBasicRemote().sendObject(new Message(ConnectionType.ERROR,
+            // ex.getMessage()));
             System.out.println(ex.getMessage());
         }
     }
@@ -81,10 +86,10 @@ public class Endpoint {
                 break;
             case 4001:
                 if (session == s1) {
-                    s2.getBasicRemote().sendObject(new Message(ConnectionType.ENDGAME, Winner.PLAYER2, game.rotateBoard()));
+                    s2.getBasicRemote().sendObject(new Message(ConnectionType.ENDGAME, Winner.PLAYER2));
                     s1 = null;
                 } else {
-                    s1.getBasicRemote().sendObject(new Message(ConnectionType.ENDGAME, Winner.PLAYER1, game.getBoard()));
+                    s1.getBasicRemote().sendObject(new Message(ConnectionType.ENDGAME, Winner.PLAYER1));
                     s2 = null;
                 }
                 break;
@@ -97,7 +102,6 @@ public class Endpoint {
 
     private void sendMessage(Message msg) throws EncodeException, IOException {
         s1.getBasicRemote().sendObject(msg);
-        msg.setBoard(game.rotateBoard());
         s2.getBasicRemote().sendObject(msg);
     }
 }
