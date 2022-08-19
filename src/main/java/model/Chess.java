@@ -81,7 +81,7 @@ public class Chess {
         if (Math.abs(dc - oc) == 2) {
             int a = (board[or][oc] == CellState.KING_PLAYER1) ? dr : 0;
             int b = dc - oc == 2 ? dc - 1 : dc + 1;
-            int c = dc - oc == 2 ? dc + 1 : dc - 1;
+            int c = dc - oc == 2 ? dc + 1 : dc - 2;
             if (isKing(beginCell)) {
                 board[a][b] = board[a][c];
                 board[a][c] = CellState.EMPTY;
