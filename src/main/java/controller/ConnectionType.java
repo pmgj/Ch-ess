@@ -1,5 +1,5 @@
 package controller;
 
 public enum ConnectionType {
-    OPEN, MESSAGE, ERROR, ENDGAME
+    OPEN, CREATE_BOARD, MESSAGE
 }

@@ -1,6 +1,5 @@
 export default Object.freeze({
     OPEN: "OPEN", 
-    MESSAGE: "MESSAGE",
-    ERROR: "ERROR",
-    ENDGAME: "ENDGAME"
+    CREATE_BOARD: "CREATE_BOARD",
+    MESSAGE: "MESSAGE"
 });

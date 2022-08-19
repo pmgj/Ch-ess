@@ -1,6 +1,7 @@
 import ConnectionType from "./ConnectionType.js";
 import CellState from "./CellState.js";
 import Cell from "./Cell.js";
+import Winner from "./Winner.js";
 
 class GUI {
     constructor() {
@@ -68,9 +69,12 @@ class GUI {
         return this.table.rows[x].cells[y];
     }
     movePiece(begin, end) {
+        if(!begin || !end) {
+            return;
+        }
         let bTD = this.getTableData(begin);
         let eTD = this.getTableData(end);
-        if(eTD.firstChild) {
+        if (eTD.firstChild) {
             eTD.removeChild(eTD.firstChild);
         }
         let img = bTD.firstChild;
@@ -100,26 +104,30 @@ class GUI {
     }
     onMessage(evt) {
         let data = JSON.parse(evt.data);
+        console.log(data);
         switch (data.type) {
             case ConnectionType.OPEN:
                 this.turn = data.turn;
                 this.writeResponse("Waiting for opponent.");
                 break;
-            case ConnectionType.MESSAGE:
-                if (data.board) {
-                    this.printBoard(data.board);
-                } else {
-                    this.movePiece(data.beginCell, data.endCell);
-                }
+            case ConnectionType.CREATE_BOARD:
+                this.printBoard(data.board);
                 this.writeResponse(this.turn === data.turn ? "It's your turn." : "Wait for your turn.");
                 break;
-            case ConnectionType.ERROR:
-                this.writeResponse(data.message);
-                break;
-            case ConnectionType.ENDGAME:
-                this.ws.close(this.closeCodes.ENDGAME.code, this.closeCodes.ENDGAME.description);
-                this.endGame(data.winner);
-                this.movePiece(data.beginCell, data.endCell);
+            case ConnectionType.MESSAGE:
+                let mr = data.moveResult;
+                if (mr.winner === Winner.NONE) {
+                    this.movePiece(data.beginCell, data.endCell);
+                    if (data.moveResult.enPassant) {
+                        let cell = this.getTableData(data.moveResult.enPassant);
+                        cell.removeChild(cell.firstChild);
+                    }
+                    this.writeResponse(this.turn === data.turn ? "It's your turn." : "Wait for your turn.");
+                } else {
+                    this.ws.close(this.closeCodes.ENDGAME.code, this.closeCodes.ENDGAME.description);
+                    this.endGame(mr.winner);
+                    this.movePiece(data.beginCell, data.endCell);    
+                }
                 break;
         }
     }

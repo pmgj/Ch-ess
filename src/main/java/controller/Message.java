@@ -2,6 +2,7 @@ package controller;
 
 import model.Cell;
 import model.CellState;
+import model.MoveResult;
 import model.Player;
 import model.Winner;
 
@@ -12,6 +13,7 @@ public class Message {
     private Winner winner;
     private Cell beginCell;
     private Cell endCell;
+    private MoveResult moveResult;
 
     public Message() {
         
@@ -28,23 +30,19 @@ public class Message {
         this.board = board;
     }
 
-    public Message(ConnectionType type, Player turn, Cell beginCell, Cell endCell) {
+    public Message(ConnectionType type, Player turn, Cell beginCell, Cell endCell, MoveResult mr) {
         this.type = type;
         this.turn = turn;
         this.beginCell = beginCell;
         this.endCell = endCell;
+        this.moveResult = mr;
     }
 
-    public Message(ConnectionType type, Winner win, Cell beginCell, Cell endCell) {
+    public Message(ConnectionType type, Winner winner) {
         this.type = type;
-        this.winner = win;
-        this.beginCell = beginCell;
-        this.endCell = endCell;
-    }
-
-    public Message(ConnectionType type, Winner win) {
-        this.type = type;
-        this.winner = win;
+        MoveResult mr = new MoveResult();
+        mr.setWinner(winner);
+        this.moveResult = mr;
     }
     
     public ConnectionType getType() {
@@ -93,5 +91,13 @@ public class Message {
 
     public void setEndCell(Cell endCell) {
         this.endCell = endCell;
+    }
+
+    public void setMoveResult(MoveResult moveResult) {
+        this.moveResult = moveResult;
+    }
+
+    public MoveResult getMoveResult() {
+        return moveResult;
     }
 }

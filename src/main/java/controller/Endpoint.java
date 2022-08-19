@@ -1,6 +1,8 @@
 package controller;
 
 import java.io.IOException;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jakarta.websocket.CloseReason;
 import jakarta.websocket.EncodeException;
@@ -31,7 +33,7 @@ public class Endpoint {
             game = new Chess();
             s2 = session;
             s2.getBasicRemote().sendObject(new Message(ConnectionType.OPEN, Player.PLAYER2));
-            Message msg = new Message(ConnectionType.MESSAGE, game.getTurn(), game.getBoard());
+            Message msg = new Message(ConnectionType.CREATE_BOARD, game.getTurn(), game.getBoard());
             s1.getBasicRemote().sendObject(msg);
             msg.setBoard(game.rotateBoard());
             s2.getBasicRemote().sendObject(msg);
@@ -62,16 +64,17 @@ public class Endpoint {
         }
         try {
             MoveResult ret = game.move(p, beginCell, endCell);
-            if (ret.getWinner() == Winner.NONE) {
-                s1.getBasicRemote().sendObject(new Message(ConnectionType.MESSAGE, game.getTurn(), bc1, ec1));
-                s2.getBasicRemote().sendObject(new Message(ConnectionType.MESSAGE, game.getTurn(), bc2, ec2));
-            } else {
-                s1.getBasicRemote().sendObject(new Message(ConnectionType.ENDGAME, ret.getWinner(), bc1, ec1));
-                s2.getBasicRemote().sendObject(new Message(ConnectionType.ENDGAME, ret.getWinner(), bc2, ec2));
+            s1.getBasicRemote().sendObject(new Message(ConnectionType.MESSAGE, game.getTurn(), bc1, ec1, ret));
+            if (ret.getEnPassant() != null) {
+                ret.setEnPassant(game.getRotatedCell(ret.getEnPassant()));
             }
+            if (ret.getCastling() != null) {
+                Stream<Cell> rotatedCells = ret.getCastling().stream().map(c -> game.getRotatedCell(c));
+                ret.getCastling().clear();
+                ret.setCastling(rotatedCells.collect(Collectors.toList()));
+            }
+            s2.getBasicRemote().sendObject(new Message(ConnectionType.MESSAGE, game.getTurn(), bc2, ec2, ret));
         } catch (Exception ex) {
-            // session.getBasicRemote().sendObject(new Message(ConnectionType.ERROR,
-            // ex.getMessage()));
             System.out.println(ex.getMessage());
         }
     }
@@ -88,10 +91,10 @@ public class Endpoint {
                 break;
             case 4001:
                 if (session == s1) {
-                    s2.getBasicRemote().sendObject(new Message(ConnectionType.ENDGAME, Winner.PLAYER2));
+                    s2.getBasicRemote().sendObject(new Message(ConnectionType.MESSAGE, Winner.PLAYER2));
                     s1 = null;
                 } else {
-                    s1.getBasicRemote().sendObject(new Message(ConnectionType.ENDGAME, Winner.PLAYER1));
+                    s1.getBasicRemote().sendObject(new Message(ConnectionType.MESSAGE, Winner.PLAYER1));
                     s2 = null;
                 }
                 break;
