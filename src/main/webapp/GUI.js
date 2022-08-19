@@ -6,20 +6,18 @@ class GUI {
     constructor() {
         this.ws = null;
         this.turn = null;
-        this.currentTurn = null;
         this.table = null;
         this.origin = null;
         this.images = { PAWN_PLAYER1: "Peao-Branco.svg", ROOK_PLAYER1: "Torre-Branca.svg", KNIGHT_PLAYER1: "Cavalo-Branco.svg", BISHOP_PLAYER1: "Bispo-Branco.svg", QUEEN_PLAYER1: "Rainha-Branca.svg", KING_PLAYER1: "Rei-Branco.svg", PAWN_PLAYER2: "Peao-Preto.svg", ROOK_PLAYER2: "Torre-Preta.svg", KNIGHT_PLAYER2: "Cavalo-Preto.svg", BISHOP_PLAYER2: "Bispo-Preto.svg", QUEEN_PLAYER2: "Rainha-Preta.svg", KING_PLAYER2: "Rei-Preto.svg" };
+        this.closeCodes = { ENDGAME: { code: 4000, description: "End of game." }, ADVERSARY_QUIT: { code: 4001, description: "The opponent quit the game" } };
     }
     writeResponse(text) {
         let message = document.getElementById("message");
         message.innerHTML = text;
     }
-    turnMessage() {
-        this.writeResponse(this.turn === this.currentTurn ? "It's your turn." : "Wait for your turn.");
-    }
     printBoard(board) {
         let tbody = document.querySelector("tbody");
+        tbody.innerHTML = "";
         for (let i = 0; i < board.length; i++) {
             let tr = document.createElement("tr");
             for (let j = 0; j < board[i].length; j++) {
@@ -72,6 +70,9 @@ class GUI {
     movePiece(begin, end) {
         let bTD = this.getTableData(begin);
         let eTD = this.getTableData(end);
+        if(eTD.firstChild) {
+            eTD.removeChild(eTD.firstChild);
+        }
         let img = bTD.firstChild;
         eTD.appendChild(img);
     }
@@ -80,61 +81,67 @@ class GUI {
     }
     play(evt) {
         let td = evt.currentTarget;
-        let piece = this.piecePlayer(td);
-        if (this.origin) {
-            let msg = { beginCell: this.coordinates(this.origin), endCell: this.coordinates(td) };
-            this.ws.send(JSON.stringify(msg));
+        if (this.origin === null) {
+            this.origin = td;
+        } else {
+            this.ws.send(JSON.stringify({ beginCell: this.coordinates(this.origin), endCell: this.coordinates(td) }));
             this.origin = null;
-            return;
         }
-        if (piece !== this.turn) {
-            return;
-        }
-        this.origin = td;
     }
-    onOpen() {
-        this.writeResponse("Waiting opponent...");
+    unsetEvents() {
+        let cells = document.querySelectorAll("td");
+        cells.forEach(td => td.onclick = undefined);
+    }
+    endGame(type) {
+        this.unsetEvents();
+        this.ws = null;
+        this.setButtonText(true);
+        this.writeResponse(`Game Over! ${(type === "DRAW") ? "Draw!" : (type === this.turn ? "You win!" : "You lose!")}`);
     }
     onMessage(evt) {
         let data = JSON.parse(evt.data);
         switch (data.type) {
             case ConnectionType.OPEN:
                 this.turn = data.turn;
+                this.writeResponse("Waiting for opponent.");
                 break;
             case ConnectionType.MESSAGE:
-                this.currentTurn = data.turn;
                 if (data.board) {
                     this.printBoard(data.board);
                 } else {
-                    let begin = data.beginCell;
-                    let end = data.endCell;
-                    this.movePiece(begin, end);
+                    this.movePiece(data.beginCell, data.endCell);
                 }
-                this.turnMessage();
+                this.writeResponse(this.turn === data.turn ? "It's your turn." : "Wait for your turn.");
                 break;
             case ConnectionType.ERROR:
                 this.writeResponse(data.message);
                 break;
             case ConnectionType.ENDGAME:
-                this.writeResponse("Connection closed.");
-                this.ws.close();
+                this.ws.close(this.closeCodes.ENDGAME.code, this.closeCodes.ENDGAME.description);
+                this.endGame(data.winner);
+                this.movePiece(data.beginCell, data.endCell);
                 break;
         }
     }
-    onClose() {
-        this.writeResponse("Connection closed.");
+    startGame() {
+        if (this.ws) {
+            this.ws.close(this.closeCodes.ADVERSARY_QUIT.code, this.closeCodes.ADVERSARY_QUIT.description);
+            this.endGame();
+        } else {
+            this.ws = new WebSocket(`ws://${document.location.host}${document.location.pathname}chess`);
+            this.ws.onmessage = this.onMessage.bind(this);
+            this.table = document.querySelector("table");
+            this.setButtonText(false);
+        }
     }
-    onError(evt) {
-        console.log(`Error: ${evt.data}`);
+    setButtonText(on) {
+        let button = document.querySelector("input[type='button']");
+        button.value = on ? "Start" : "Quit";
     }
     init() {
-        let wsUri = `ws://${document.location.host}${document.location.pathname}chess`;
-        this.ws = new WebSocket(wsUri);
-        this.ws.onopen = this.onOpen.bind(this);
-        this.ws.onmessage = this.onMessage.bind(this);
-        this.ws.onerror = this.onError;
-        this.ws.onclose = this.onClose.bind(this);
-        this.table = document.querySelector("table");
+        let button = document.querySelector("input[type='button']");
+        button.onclick = this.startGame.bind(this);
+        this.setButtonText(true);
     }
 }
 let gui = new GUI();
