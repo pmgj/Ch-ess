@@ -85,7 +85,7 @@ public class Chess {
             if (isKing(beginCell)) {
                 board[a][b] = board[a][c];
                 board[a][c] = CellState.EMPTY;
-                return Arrays.asList(new Cell[] { new Cell(a, c), new Cell(a, b) });
+                return Arrays.asList(new Cell(a, c), new Cell(a, b));
             }
         }
         return null;

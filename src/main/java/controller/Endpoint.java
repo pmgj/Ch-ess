@@ -70,7 +70,6 @@ public class Endpoint {
             }
             if (ret.getCastling() != null) {
                 Stream<Cell> rotatedCells = ret.getCastling().stream().map(c -> game.getRotatedCell(c));
-                ret.getCastling().clear();
                 ret.setCastling(rotatedCells.collect(Collectors.toList()));
             }
             s2.getBasicRemote().sendObject(new Message(ConnectionType.MESSAGE, game.getTurn(), bc2, ec2, ret));

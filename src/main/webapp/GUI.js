@@ -69,7 +69,7 @@ class GUI {
         return this.table.rows[x].cells[y];
     }
     movePiece(begin, end) {
-        if(!begin || !end) {
+        if (!begin || !end) {
             return;
         }
         let bTD = this.getTableData(begin);
@@ -118,15 +118,18 @@ class GUI {
                 let mr = data.moveResult;
                 if (mr.winner === Winner.NONE) {
                     this.movePiece(data.beginCell, data.endCell);
-                    if (data.moveResult.enPassant) {
-                        let cell = this.getTableData(data.moveResult.enPassant);
+                    if (mr.enPassant) {
+                        let cell = this.getTableData(mr.enPassant);
                         cell.removeChild(cell.firstChild);
+                    }
+                    if (mr.castling) {
+                        this.movePiece(mr.castling[0], mr.castling[1]);
                     }
                     this.writeResponse(this.turn === data.turn ? "It's your turn." : "Wait for your turn.");
                 } else {
                     this.ws.close(this.closeCodes.ENDGAME.code, this.closeCodes.ENDGAME.description);
                     this.endGame(mr.winner);
-                    this.movePiece(data.beginCell, data.endCell);    
+                    this.movePiece(data.beginCell, data.endCell);
                 }
                 break;
         }
