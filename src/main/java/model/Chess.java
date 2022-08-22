@@ -259,10 +259,10 @@ public class Chess {
                 int dr = m.getX(), dc = m.getY();
 
                 CellState[][] boardCopy = new CellState[rows][cols];
-                for(int i = 0; i < board.length; i++) {
+                for (int i = 0; i < board.length; i++) {
                     CellState[] row = board[i];
                     System.arraycopy(row, 0, boardCopy[i], 0, board.length);
-                }        
+                }
 
                 boardCopy[dr][dc] = boardCopy[or][oc];
                 boardCopy[or][oc] = CellState.EMPTY;
@@ -321,7 +321,6 @@ public class Chess {
                 c = 6;
                 d = CellState.PLAYER2;
                 e = CellState.PAWN_PLAYER2;
-
             } else {
                 a = x + 1;
                 b = x + 2;
@@ -354,14 +353,14 @@ public class Chess {
                 moves.add(new Cell(a, y + 1));
             }
         } else if (board[x][y] == CellState.KNIGHT_PLAYER1 || board[x][y] == CellState.KNIGHT_PLAYER2) {
-            List<Cell> positions = Arrays.asList(new Cell[] { new Cell(x - 2, y - 1), new Cell(x - 2, y + 1),
+            List<Cell> positions = Arrays.asList(new Cell(x - 2, y - 1), new Cell(x - 2, y + 1),
                     new Cell(x + 2, y - 1), new Cell(x + 2, y + 1), new Cell(x - 1, y - 2), new Cell(x - 1, y + 2),
-                    new Cell(x + 1, y - 2), new Cell(x + 1, y + 2) });
+                    new Cell(x + 1, y - 2), new Cell(x + 1, y + 2));
             addMoves.apply(positions);
         } else if (isKing(cell)) {
             List<Cell> positions = Arrays.asList(
-                    new Cell[] { new Cell(x - 1, y - 1), new Cell(x - 1, y), new Cell(x - 1, y + 1), new Cell(x, y - 1),
-                            new Cell(x, y + 1), new Cell(x + 1, y - 1), new Cell(x + 1, y), new Cell(x + 1, y + 1) });
+                    new Cell(x - 1, y - 1), new Cell(x - 1, y), new Cell(x - 1, y + 1), new Cell(x, y - 1),
+                    new Cell(x, y + 1), new Cell(x + 1, y - 1), new Cell(x + 1, y), new Cell(x + 1, y + 1));
             addMoves.apply(positions);
             boolean castlingKing, castlingQueen;
             int row;
@@ -419,13 +418,12 @@ public class Chess {
     }
 
     private List<Cell> rookPositions(Cell cell) {
-        List<Cell> lin = Arrays.asList(new Cell[] { new Cell(-1, 0), new Cell(1, 0), new Cell(0, -1), new Cell(0, 1) });
+        List<Cell> lin = Arrays.asList(new Cell(-1, 0), new Cell(1, 0), new Cell(0, -1), new Cell(0, 1));
         return selectPositions(cell, lin);
     }
 
     private List<Cell> bishopPositions(Cell cell) {
-        List<Cell> lin = Arrays
-                .asList(new Cell[] { new Cell(-1, -1), new Cell(-1, 1), new Cell(1, -1), new Cell(1, 1) });
+        List<Cell> lin = Arrays.asList(new Cell(-1, -1), new Cell(-1, 1), new Cell(1, -1), new Cell(1, 1));
         return selectPositions(cell, lin);
     }
 

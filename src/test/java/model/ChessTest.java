@@ -225,6 +225,92 @@ public class ChessTest {
         } catch (Exception ex) {
             Assertions.fail();
         }
+    }
+
+    @Test
+    public void testEnPassant1() {
+        Chess c = new Chess();
+        MoveResult m;
+        try {
+            m = c.move(Player.PLAYER1, new Cell(6, 4), new Cell(4, 4));
+            Assertions.assertSame(Winner.NONE, m.getWinner());
+        } catch (Exception ex) {
+            Assertions.fail();
+        }
+        try {
+            m = c.move(Player.PLAYER2, new Cell(0, 1), new Cell(2, 0));
+            Assertions.assertSame(Winner.NONE, m.getWinner());
+        } catch (Exception ex) {
+            Assertions.fail();
+        }
+        try {
+            m = c.move(Player.PLAYER1, new Cell(4, 4), new Cell(3, 4));
+            Assertions.assertSame(Winner.NONE, m.getWinner());
+        } catch (Exception ex) {
+            Assertions.fail();
+        }
+        try {
+            m = c.move(Player.PLAYER2, new Cell(1, 3), new Cell(3, 3));
+            Assertions.assertSame(Winner.NONE, m.getWinner());
+        } catch (Exception ex) {
+            Assertions.fail();
+        }
+        try {
+            m = c.move(Player.PLAYER1, new Cell(3, 4), new Cell(2, 3));
+            Assertions.assertSame(Winner.NONE, m.getWinner());
+            CellState[][] board = c.getBoard();
+            Assertions.assertSame(CellState.PAWN_PLAYER1, board[2][3]);
+            Assertions.assertSame(CellState.EMPTY, board[3][3]);
+        } catch (Exception ex) {
+            Assertions.fail();
+        }
+        try {
+            m = c.move(Player.PLAYER2, new Cell(1, 6), new Cell(3, 6));
+            Assertions.assertSame(Winner.NONE, m.getWinner());
+        } catch (Exception ex) {
+            Assertions.fail();
+        }
+        try {
+            m = c.move(Player.PLAYER1, new Cell(6, 7), new Cell(4, 7));
+            Assertions.assertSame(Winner.NONE, m.getWinner());
+        } catch (Exception ex) {
+            Assertions.fail();
+        }
+        try {
+            m = c.move(Player.PLAYER2, new Cell(3, 6), new Cell(4, 6));
+            Assertions.assertSame(Winner.NONE, m.getWinner());
+        } catch (Exception ex) {
+            Assertions.fail();
+        }
+        try {
+            m = c.move(Player.PLAYER1, new Cell(7, 1), new Cell(5, 0));
+            Assertions.assertSame(Winner.NONE, m.getWinner());
+        } catch (Exception ex) {
+            Assertions.fail();
+        }
+        try {
+            m = c.move(Player.PLAYER2, new Cell(4, 6), new Cell(5, 7));
+            Assertions.fail();
+        } catch (Exception ex) {
+        }
+        try {
+            m = c.move(Player.PLAYER2, new Cell(0, 6), new Cell(2, 7));
+            Assertions.assertSame(Winner.NONE, m.getWinner());
+        } catch (Exception ex) {
+            Assertions.fail();
+        }
+        try {
+            m = c.move(Player.PLAYER1, new Cell(6, 5), new Cell(4, 5));
+            Assertions.assertSame(Winner.NONE, m.getWinner());
+        } catch (Exception ex) {
+            Assertions.fail();
+        }
+        try {
+            m = c.move(Player.PLAYER2, new Cell(4, 6), new Cell(5, 5));
+            Assertions.assertSame(Winner.NONE, m.getWinner());
+        } catch (Exception ex) {
+            Assertions.fail();
+        }
         c.printBoard();
     }
 }
