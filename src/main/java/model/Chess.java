@@ -189,6 +189,7 @@ public class Chess {
         board[or][oc] = CellState.EMPTY;
         turn = (turn == Player.PLAYER1) ? Player.PLAYER2 : Player.PLAYER1;
         result.setWinner(endOfGame());
+        result.setCheck(this.isCheck(turn));
         return result;
     }
 

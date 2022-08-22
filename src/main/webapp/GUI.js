@@ -125,7 +125,8 @@ class GUI {
                     if (mr.castling) {
                         this.movePiece(mr.castling[0], mr.castling[1]);
                     }
-                    this.writeResponse(this.turn === data.turn ? "It's your turn." : "Wait for your turn.");
+                    let check = mr.check ? "Check!" : "";
+                    this.writeResponse(this.turn === data.turn ? `${check} It's your turn.` : `${check} Wait for your turn.`);
                 } else {
                     this.ws.close(this.closeCodes.ENDGAME.code, this.closeCodes.ENDGAME.description);
                     this.endGame(mr.winner);
