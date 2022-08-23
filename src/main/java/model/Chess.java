@@ -245,7 +245,7 @@ public class Chess {
         return false;
     }
 
-    private List<Cell> showPossibleMoves(Cell cell) {
+    public List<Cell> showPossibleMoves(Cell cell) {
         List<Cell> ret = new ArrayList<>();
         CellState piece = getPiece(cell);
         if ((piece == CellState.PLAYER1 && turn == Player.PLAYER1)

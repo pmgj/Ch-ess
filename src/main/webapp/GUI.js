@@ -86,6 +86,7 @@ class GUI {
     play(evt) {
         let td = evt.currentTarget;
         if (this.origin === null) {
+            this.ws.send(JSON.stringify({ beginCell: this.coordinates(td) }));
             this.origin = td;
         } else {
             this.ws.send(JSON.stringify({ beginCell: this.coordinates(this.origin), endCell: this.coordinates(td) }));
@@ -95,6 +96,18 @@ class GUI {
     unsetEvents() {
         let cells = document.querySelectorAll("td");
         cells.forEach(td => td.onclick = undefined);
+    }
+    showPossibleMoves(cells) {
+        for(let cell of cells) {
+            let td = this.getTableData(cell);
+            td.className = "selected";
+        }
+    }
+    hidePossibleMoves() {
+        let tds = document.querySelectorAll("td");
+        for(let td of tds) {
+            td.className = "";
+        }
     }
     endGame(type) {
         this.unsetEvents();
@@ -114,6 +127,9 @@ class GUI {
                 this.printBoard(data.board);
                 this.writeResponse(this.turn === data.turn ? "It's your turn." : "Wait for your turn.");
                 break;
+            case ConnectionType.SHOW_MOVES:
+                this.showPossibleMoves(data.possibleMoves);
+                break;
             case ConnectionType.MESSAGE:
                 let mr = data.moveResult;
                 if (mr.winner === Winner.NONE) {
@@ -132,6 +148,7 @@ class GUI {
                     this.endGame(mr.winner);
                     this.movePiece(data.beginCell, data.endCell);
                 }
+                this.hidePossibleMoves();
                 break;
         }
     }

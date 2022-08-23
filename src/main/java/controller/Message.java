@@ -1,5 +1,7 @@
 package controller;
 
+import java.util.List;
+
 import model.Cell;
 import model.CellState;
 import model.MoveResult;
@@ -14,6 +16,7 @@ public class Message {
     private Cell beginCell;
     private Cell endCell;
     private MoveResult moveResult;
+    private List<Cell> possibleMoves;
 
     public Message() {
         
@@ -22,6 +25,11 @@ public class Message {
     public Message(ConnectionType type, Player turn) {
         this.type = type;
         this.turn = turn;
+    }
+
+    public Message(ConnectionType type, List<Cell> moves) {
+        this.type = type;
+        this.possibleMoves = moves;
     }
 
     public Message(ConnectionType type, Player turn, CellState[][] board) {
@@ -99,5 +107,13 @@ public class Message {
 
     public MoveResult getMoveResult() {
         return moveResult;
+    }
+
+    public List<Cell> getPossibleMoves() {
+        return possibleMoves;
+    }
+
+    public void setPossibleMoves(List<Cell> possibleMoves) {
+        this.possibleMoves = possibleMoves;
     }
 }

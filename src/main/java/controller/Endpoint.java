@@ -1,6 +1,8 @@
 package controller;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -44,9 +46,30 @@ public class Endpoint {
 
     @OnMessage
     public void onMessage(Session session, MoveMessage message) throws IOException, EncodeException {
+        Cell beginCell = message.getBeginCell(), endCell = message.getEndCell();
+        if(endCell == null) {
+            Cell bCell = null;
+            List<Cell> pm = null;
+            if (session == s1 && game.getTurn() == Player.PLAYER1) {
+                bCell = beginCell;
+                pm = game.showPossibleMoves(bCell);
+            }
+            if (session == s2 && game.getTurn() == Player.PLAYER2) {
+                bCell = game.getRotatedCell(beginCell);
+                pm = game.showPossibleMoves(bCell);
+                List<Cell> rotatedCells = new ArrayList<>();
+                for(Cell temp : pm) {
+                    rotatedCells.add(game.getRotatedCell(temp));
+                }
+                pm = rotatedCells;
+            }
+            if(bCell != null) {
+                session.getBasicRemote().sendObject(new Message(ConnectionType.SHOW_MOVES, pm));    
+            } 
+            return;
+        }
         Cell bc1, bc2, ec1, ec2;
         Player p;
-        Cell beginCell = message.getBeginCell(), endCell = message.getEndCell();
         if (session == s1) {
             p = Player.PLAYER1;
             bc1 = beginCell;
