@@ -111,7 +111,7 @@ class GUI {
     getCorrectCell(cell) {
         return this.player === Player.PLAYER1 ? cell : this.getRotatedCell(cell);
     }
-    getRotatedCell({x, y}) {
+    getRotatedCell({ x, y }) {
         return new Cell(8 - x - 1, 8 - y - 1);
     }
     showPossibleMoves(cells) {
@@ -162,11 +162,11 @@ class GUI {
                     }
                     if (this.player === game.turn && game.promotionCell) {
                         let select = document.querySelector("select");
-                        select.style.display = "block";
+                        select.className = "show";
                         select.onchange = () => {
                             this.ws.send(JSON.stringify({ promote: parseInt(select.value) }));
                             select.value = -1;
-                            select.style.display = "none";
+                            select.className = "hide";
                         };
                     }
                     let check = game.check ? "Check!" : "";
@@ -178,6 +178,14 @@ class GUI {
                 }
                 this.hidePossibleMoves();
                 break;
+            case ConnectionType.PROMOTED_PIECE:
+                let piece = game.promotedPiece;
+                let cell = this.getCorrectCell(game.promotionCell);
+                let td = this.getTableData(cell);
+                td.innerHTML = `<img src="images/${this.images[piece]}" alt="" />`;
+                let check = game.check ? "Check!" : "";
+                this.writeResponse(this.player === game.turn ? `${check} It's your turn.` : `${check} Wait for your turn.`);
+            break;
         }
     }
     startGame() {

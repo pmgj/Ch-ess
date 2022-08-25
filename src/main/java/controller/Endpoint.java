@@ -41,29 +41,29 @@ public class Endpoint {
     @OnMessage
     public void onMessage(Session session, MoveMessage message) throws IOException, EncodeException {
         Cell beginCell = message.getBeginCell(), endCell = message.getEndCell();
-        if (message.getPromote() != -1) {
-            game.promote(message.getPromote());
-            s1.getBasicRemote().sendObject(new Message(ConnectionType.PROMOTED_PIECE, game));
-            s2.getBasicRemote().sendObject(new Message(ConnectionType.PROMOTED_PIECE, game));
-            return;
-        }
-        if (endCell == null) {
-            Cell bCell = null;
-            List<Cell> pm = null;
-            if (session == s1 && game.getTurn() == Player.PLAYER1) {
-                bCell = beginCell;
-                pm = game.showPossibleMoves(bCell);
-            }
-            if (session == s2 && game.getTurn() == Player.PLAYER2) {
-                bCell = beginCell;
-                pm = game.showPossibleMoves(bCell);
-            }
-            if (bCell != null) {
-                session.getBasicRemote().sendObject(new Message(ConnectionType.SHOW_MOVES, pm));
-            }
-            return;
-        }
         try {
+            if (message.getPromote() != -1) {
+                game.promote(message.getPromote());
+                s1.getBasicRemote().sendObject(new Message(ConnectionType.PROMOTED_PIECE, game));
+                s2.getBasicRemote().sendObject(new Message(ConnectionType.PROMOTED_PIECE, game));
+                return;
+            }
+            if (endCell == null) {
+                Cell bCell = null;
+                List<Cell> pm = null;
+                if (session == s1 && game.getTurn() == Player.PLAYER1) {
+                    bCell = beginCell;
+                    pm = game.showPossibleMoves(bCell);
+                }
+                if (session == s2 && game.getTurn() == Player.PLAYER2) {
+                    bCell = beginCell;
+                    pm = game.showPossibleMoves(bCell);
+                }
+                if (bCell != null) {
+                    session.getBasicRemote().sendObject(new Message(ConnectionType.SHOW_MOVES, pm));
+                }
+                return;
+            }
             game.move(session == s1 ? Player.PLAYER1 : Player.PLAYER2, beginCell, endCell);
             s1.getBasicRemote().sendObject(new Message(ConnectionType.MOVE_PIECE, game, beginCell, endCell));
             s2.getBasicRemote().sendObject(new Message(ConnectionType.MOVE_PIECE, game, beginCell, endCell));

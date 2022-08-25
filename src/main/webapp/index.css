@@ -28,6 +28,13 @@ p {
 }
 
 select {
-    display: none;
     margin: 0 auto;
+}
+
+.hide {
+    display: none;
+}
+
+.show {
+    display: initial;
 }

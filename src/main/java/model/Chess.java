@@ -6,10 +6,6 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import controller.ConnectionType;
-import controller.Message;
-import jakarta.json.bind.JsonbBuilder;
-
 public class Chess {
 
     private final int rows = 8;
@@ -222,6 +218,8 @@ public class Chess {
             this.promotionCell = endCell;
             return;
         }
+        this.promotedPiece = null;
+        this.promotionCell = null;
         this.turn = (this.turn == Player.PLAYER1) ? Player.PLAYER2 : Player.PLAYER1;
         this.winner = this.endOfGame();
     }
@@ -326,7 +324,10 @@ public class Chess {
         this.board = matrix;
     }
 
-    public void promote(int newPiece) {
+    public void promote(int newPiece) throws Exception {
+        if(!this.promotion) {
+            throw new Exception("You can not promote a piece right now.");
+        }
         CellState[] player1 = new CellState[] { CellState.ROOK_PLAYER1, CellState.KNIGHT_PLAYER1,
                 CellState.BISHOP_PLAYER1, CellState.QUEEN_PLAYER1 };
         CellState[] player2 = new CellState[] { CellState.ROOK_PLAYER2, CellState.KNIGHT_PLAYER2,
@@ -541,17 +542,5 @@ public class Chess {
             }
             System.out.println("");
         }
-    }
-
-    public Cell getRotatedCell(Cell cell) {
-        int or = rows - cell.getX() - 1;
-        int oc = cols - cell.getY() - 1;
-        return new Cell(or, oc);
-    }
-
-    public static void main(String[] args) {
-        Chess game = new Chess();
-        Message message = new Message(ConnectionType.OPEN, game);
-        System.out.println(JsonbBuilder.create().toJson(message));
     }
 }
