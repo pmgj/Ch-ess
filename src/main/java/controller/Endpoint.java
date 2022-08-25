@@ -1,10 +1,7 @@
 package controller;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import jakarta.websocket.CloseReason;
 import jakarta.websocket.EncodeException;
@@ -15,9 +12,7 @@ import jakarta.websocket.Session;
 import jakarta.websocket.server.ServerEndpoint;
 import model.Cell;
 import model.Chess;
-import model.MoveResult;
 import model.Player;
-import model.Winner;
 
 @ServerEndpoint(value = "/chess", encoders = MessageEncoder.class, decoders = MoveMessageDecoder.class)
 public class Endpoint {
@@ -35,9 +30,8 @@ public class Endpoint {
             game = new Chess();
             s2 = session;
             s2.getBasicRemote().sendObject(new Message(ConnectionType.OPEN, Player.PLAYER2));
-            Message msg = new Message(ConnectionType.CREATE_BOARD, game.getTurn(), game.getBoard());
+            Message msg = new Message(ConnectionType.CREATE_BOARD, game);
             s1.getBasicRemote().sendObject(msg);
-            msg.setBoard(game.rotateBoard());
             s2.getBasicRemote().sendObject(msg);
         } else {
             session.close();
@@ -47,7 +41,12 @@ public class Endpoint {
     @OnMessage
     public void onMessage(Session session, MoveMessage message) throws IOException, EncodeException {
         Cell beginCell = message.getBeginCell(), endCell = message.getEndCell();
-        if(endCell == null) {
+        if (message.getPromote() != -1) {
+            // game.promote(message.getPromote());
+            // CellState piece = game.getPromotedPiece();
+            return;
+        }
+        if (endCell == null) {
             Cell bCell = null;
             List<Cell> pm = null;
             if (session == s1 && game.getTurn() == Player.PLAYER1) {
@@ -55,47 +54,17 @@ public class Endpoint {
                 pm = game.showPossibleMoves(bCell);
             }
             if (session == s2 && game.getTurn() == Player.PLAYER2) {
-                bCell = game.getRotatedCell(beginCell);
+                bCell = beginCell;
                 pm = game.showPossibleMoves(bCell);
-                List<Cell> rotatedCells = new ArrayList<>();
-                for(Cell temp : pm) {
-                    rotatedCells.add(game.getRotatedCell(temp));
-                }
-                pm = rotatedCells;
             }
-            if(bCell != null) {
-                session.getBasicRemote().sendObject(new Message(ConnectionType.SHOW_MOVES, pm));    
-            } 
+            if (bCell != null) {
+                session.getBasicRemote().sendObject(new Message(ConnectionType.SHOW_MOVES, pm));
+            }
             return;
         }
-        Cell bc1, bc2, ec1, ec2;
-        Player p;
-        if (session == s1) {
-            p = Player.PLAYER1;
-            bc1 = beginCell;
-            ec1 = endCell;
-            bc2 = game.getRotatedCell(beginCell);
-            ec2 = game.getRotatedCell(endCell);
-        } else {
-            p = Player.PLAYER2;
-            bc2 = beginCell;
-            ec2 = endCell;
-            beginCell = game.getRotatedCell(beginCell);
-            endCell = game.getRotatedCell(endCell);
-            bc1 = beginCell;
-            ec1 = endCell;
-        }
         try {
-            MoveResult ret = game.move(p, beginCell, endCell);
-            s1.getBasicRemote().sendObject(new Message(ConnectionType.MESSAGE, game.getTurn(), bc1, ec1, ret));
-            if (ret.getEnPassant() != null) {
-                ret.setEnPassant(game.getRotatedCell(ret.getEnPassant()));
-            }
-            if (ret.getCastling() != null) {
-                Stream<Cell> rotatedCells = ret.getCastling().stream().map(c -> game.getRotatedCell(c));
-                ret.setCastling(rotatedCells.collect(Collectors.toList()));
-            }
-            s2.getBasicRemote().sendObject(new Message(ConnectionType.MESSAGE, game.getTurn(), bc2, ec2, ret));
+            s1.getBasicRemote().sendObject(new Message(ConnectionType.MOVE_PIECE, game, beginCell, endCell));
+            s2.getBasicRemote().sendObject(new Message(ConnectionType.MOVE_PIECE, game, beginCell, endCell));
         } catch (Exception ex) {
             System.out.println(ex.getMessage());
         }
@@ -113,10 +82,10 @@ public class Endpoint {
                 break;
             case 4001:
                 if (session == s1) {
-                    s2.getBasicRemote().sendObject(new Message(ConnectionType.MESSAGE, Winner.PLAYER2));
+                    s2.getBasicRemote().sendObject(new Message(ConnectionType.MOVE_PIECE, game));
                     s1 = null;
                 } else {
-                    s1.getBasicRemote().sendObject(new Message(ConnectionType.MESSAGE, Winner.PLAYER1));
+                    s1.getBasicRemote().sendObject(new Message(ConnectionType.MOVE_PIECE, game));
                     s2 = null;
                 }
                 break;

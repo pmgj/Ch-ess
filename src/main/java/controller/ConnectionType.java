@@ -1,5 +1,5 @@
 package controller;
 
 public enum ConnectionType {
-    OPEN, CREATE_BOARD, SHOW_MOVES, MESSAGE
+    OPEN, CREATE_BOARD, SHOW_MOVES, MOVE_PIECE, PROMOTED_PIECE
 }

@@ -2,11 +2,12 @@ import ConnectionType from "./ConnectionType.js";
 import CellState from "./CellState.js";
 import Cell from "./Cell.js";
 import Winner from "./Winner.js";
+import Player from "./Player.js";
 
 class GUI {
     constructor() {
         this.ws = null;
-        this.turn = null;
+        this.player = null;
         this.table = null;
         this.origin = null;
         this.images = { PAWN_PLAYER1: "Peao-Branco.svg", ROOK_PLAYER1: "Torre-Branca.svg", KNIGHT_PLAYER1: "Cavalo-Branco.svg", BISHOP_PLAYER1: "Bispo-Branco.svg", QUEEN_PLAYER1: "Rainha-Branca.svg", KING_PLAYER1: "Rei-Branco.svg", PAWN_PLAYER2: "Peao-Preto.svg", ROOK_PLAYER2: "Torre-Preta.svg", KNIGHT_PLAYER2: "Cavalo-Preto.svg", BISHOP_PLAYER2: "Bispo-Preto.svg", QUEEN_PLAYER2: "Rainha-Preta.svg", KING_PLAYER2: "Rei-Preto.svg" };
@@ -19,13 +20,23 @@ class GUI {
     printBoard(board) {
         let tbody = document.querySelector("tbody");
         tbody.innerHTML = "";
-        for (let i = 0; i < board.length; i++) {
+        let transMatrix = board;
+        if (this.player === Player.PLAYER2) {
+            transMatrix = Array(board.length).fill().map(() => Array(board[0].length).fill());
+            for (let i = 0, rows = board.length; i < rows; i++) {
+                for (let j = 0, cols = board[i].length; j < cols; j++) {
+                    transMatrix[i][j] = board[rows - i - 1][cols - j - 1];
+                }
+            }
+            board = transMatrix;
+        }
+        for (let i = 0; i < transMatrix.length; i++) {
             let tr = document.createElement("tr");
-            for (let j = 0; j < board[i].length; j++) {
+            for (let j = 0; j < transMatrix[i].length; j++) {
                 let td = document.createElement("td");
-                if (board[i][j] !== CellState.EMPTY) {
+                if (transMatrix[i][j] !== CellState.EMPTY) {
                     let img = document.createElement("img");
-                    img.src = `images/${this.images[board[i][j]]}`;
+                    img.src = `images/${this.images[transMatrix[i][j]]}`;
                     // img.ondragstart = drag;
                     td.appendChild(img);
                 }
@@ -72,8 +83,8 @@ class GUI {
         if (!begin || !end) {
             return;
         }
-        let bTD = this.getTableData(begin);
-        let eTD = this.getTableData(end);
+        let bTD = this.getTableData(this.getCorrectCell(begin));
+        let eTD = this.getTableData(this.getCorrectCell(end));
         if (eTD.firstChild) {
             eTD.removeChild(eTD.firstChild);
         }
@@ -86,66 +97,84 @@ class GUI {
     play(evt) {
         let td = evt.currentTarget;
         if (this.origin === null) {
-            this.ws.send(JSON.stringify({ beginCell: this.coordinates(td) }));
+            this.ws.send(JSON.stringify({ beginCell: this.getCorrectCell(this.coordinates(td)) }));
             this.origin = td;
         } else {
-            this.ws.send(JSON.stringify({ beginCell: this.coordinates(this.origin), endCell: this.coordinates(td) }));
+            this.ws.send(JSON.stringify({ beginCell: this.getCorrectCell(this.coordinates(this.origin)), endCell: this.getCorrectCell(this.coordinates(td)) }));
             this.origin = null;
         }
     }
     unsetEvents() {
-        let cells = document.querySelectorAll("td");
-        cells.forEach(td => td.onclick = undefined);
+        let tds = document.querySelectorAll("td");
+        tds.forEach(td => td.onclick = undefined);
+    }
+    getCorrectCell(cell) {
+        return this.player === Player.PLAYER1 ? cell : this.getRotatedCell(cell);
+    }
+    getRotatedCell({x, y}) {
+        return new Cell(8 - x - 1, 8 - y - 1);
     }
     showPossibleMoves(cells) {
-        for(let cell of cells) {
+        let moves = cells;
+        if (this.player === Player.PLAYER2) {
+            moves = cells.map(c => this.getRotatedCell(c));
+        }
+        for (let cell of moves) {
             let td = this.getTableData(cell);
             td.className = "selected";
         }
     }
     hidePossibleMoves() {
         let tds = document.querySelectorAll("td");
-        for(let td of tds) {
-            td.className = "";
-        }
+        tds.forEach(td => td.className = "");
     }
     endGame(type) {
         this.unsetEvents();
         this.ws = null;
         this.setButtonText(true);
-        this.writeResponse(`Game Over! ${(type === "DRAW") ? "Draw!" : (type === this.turn ? "You win!" : "You lose!")}`);
+        this.writeResponse(`Game Over! ${(type === "DRAW") ? "Draw!" : (type === this.player ? "You win!" : "You lose!")}`);
     }
     onMessage(evt) {
         let data = JSON.parse(evt.data);
         console.log(data);
+        let game = data.game;
         switch (data.type) {
             case ConnectionType.OPEN:
-                this.turn = data.turn;
+                this.player = data.turn;
                 this.writeResponse("Waiting for opponent.");
                 break;
             case ConnectionType.CREATE_BOARD:
-                this.printBoard(data.board);
-                this.writeResponse(this.turn === data.turn ? "It's your turn." : "Wait for your turn.");
+                this.printBoard(game.board);
+                this.writeResponse(this.player === game.turn ? "It's your turn." : "Wait for your turn.");
                 break;
             case ConnectionType.SHOW_MOVES:
                 this.showPossibleMoves(data.possibleMoves);
                 break;
-            case ConnectionType.MESSAGE:
+            case ConnectionType.MOVE_PIECE:
                 let mr = data.moveResult;
-                if (mr.winner === Winner.NONE) {
+                if (game.winner === Winner.NONE) {
                     this.movePiece(data.beginCell, data.endCell);
-                    if (mr.enPassant) {
-                        let cell = this.getTableData(mr.enPassant);
+                    if (game.enPassant) {
+                        let cell = this.getTableData(this.getCorrectCell(game.enPassant));
                         cell.removeChild(cell.firstChild);
                     }
-                    if (mr.castling) {
-                        this.movePiece(mr.castling[0], mr.castling[1]);
+                    if (game.castling) {
+                        this.movePiece(game.castling[0], game.castling[1]);
                     }
-                    let check = mr.check ? "Check!" : "";
-                    this.writeResponse(this.turn === data.turn ? `${check} It's your turn.` : `${check} Wait for your turn.`);
+                    if (this.player === game.turn && mr.promote) {
+                        let select = document.querySelector("select");
+                        select.style.display = "block";
+                        select.onchange = () => {
+                            this.ws.send(JSON.stringify({ promote: parseInt(select.value) }));
+                            select.value = -1;
+                            select.style.display = "none";
+                        };
+                    }
+                    let check = game.check ? "Check!" : "";
+                    this.writeResponse(this.player === game.turn ? `${check} It's your turn.` : `${check} Wait for your turn.`);
                 } else {
                     this.ws.close(this.closeCodes.ENDGAME.code, this.closeCodes.ENDGAME.description);
-                    this.endGame(mr.winner);
+                    this.endGame(game.winner);
                     this.movePiece(data.beginCell, data.endCell);
                 }
                 this.hidePossibleMoves();

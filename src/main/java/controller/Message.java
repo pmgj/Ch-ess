@@ -3,20 +3,16 @@ package controller;
 import java.util.List;
 
 import model.Cell;
-import model.CellState;
-import model.MoveResult;
+import model.Chess;
 import model.Player;
-import model.Winner;
 
 public class Message {
     private ConnectionType type;
     private Player turn;
-    private CellState[][] board;
-    private Winner winner;
     private Cell beginCell;
     private Cell endCell;
-    private MoveResult moveResult;
     private List<Cell> possibleMoves;
+    private Chess game;
 
     public Message() {
         
@@ -27,30 +23,21 @@ public class Message {
         this.turn = turn;
     }
 
+    public Message(ConnectionType type, Chess game) {
+        this.type = type;
+        this.game = game;
+    }
+
     public Message(ConnectionType type, List<Cell> moves) {
         this.type = type;
         this.possibleMoves = moves;
     }
 
-    public Message(ConnectionType type, Player turn, CellState[][] board) {
+    public Message(ConnectionType type, Chess game, Cell beginCell, Cell endCell) {
         this.type = type;
-        this.turn = turn;
-        this.board = board;
-    }
-
-    public Message(ConnectionType type, Player turn, Cell beginCell, Cell endCell, MoveResult mr) {
-        this.type = type;
-        this.turn = turn;
+        this.game = game;
         this.beginCell = beginCell;
         this.endCell = endCell;
-        this.moveResult = mr;
-    }
-
-    public Message(ConnectionType type, Winner winner) {
-        this.type = type;
-        MoveResult mr = new MoveResult();
-        mr.setWinner(winner);
-        this.moveResult = mr;
     }
     
     public ConnectionType getType() {
@@ -69,22 +56,6 @@ public class Message {
         this.turn = turn;
     }
 
-    public CellState[][] getBoard() {
-        return board;
-    }
-
-    public void setBoard(CellState[][] board) {
-        this.board = board;
-    }
-
-    public Winner getWinner() {
-        return winner;
-    }
-
-    public void setWinner(Winner winner) {
-        this.winner = winner;
-    }
-
     public Cell getBeginCell() {
         return beginCell;
     }
@@ -101,19 +72,19 @@ public class Message {
         this.endCell = endCell;
     }
 
-    public void setMoveResult(MoveResult moveResult) {
-        this.moveResult = moveResult;
-    }
-
-    public MoveResult getMoveResult() {
-        return moveResult;
-    }
-
     public List<Cell> getPossibleMoves() {
         return possibleMoves;
     }
 
     public void setPossibleMoves(List<Cell> possibleMoves) {
         this.possibleMoves = possibleMoves;
+    }
+
+    public void setGame(Chess game) {
+        this.game = game;
+    }
+
+    public Chess getGame() {
+        return game;
     }
 }

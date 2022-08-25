@@ -5,6 +5,7 @@ import model.Cell;
 public class MoveMessage {
     private Cell beginCell;
     private Cell endCell;
+    private int promote = -1;
 
     public Cell getBeginCell() {
         return beginCell;
@@ -20,5 +21,13 @@ public class MoveMessage {
 
     public void setEndCell(Cell endCell) {
         this.endCell = endCell;
+    }
+
+    public int getPromote() {
+        return promote;
+    }
+
+    public void setPromote(int promote) {
+        this.promote = promote;
     }
 }

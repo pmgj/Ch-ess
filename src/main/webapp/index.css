@@ -23,10 +23,11 @@ tr:nth-child(2n) td:nth-child(2n+1) {
     border: 3px solid red;
 }
 
-.unselected {
-    border: 3px solid black;
-}
-
 p {
     text-align: center;
+}
+
+select {
+    display: none;
+    margin: 0 auto;
 }

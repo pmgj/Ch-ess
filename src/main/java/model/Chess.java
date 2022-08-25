@@ -6,6 +6,10 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import controller.ConnectionType;
+import controller.Message;
+import jakarta.json.bind.JsonbBuilder;
+
 public class Chess {
 
     private final int rows = 8;
@@ -29,23 +33,43 @@ public class Chess {
             { CellState.ROOK_PLAYER1, CellState.KNIGHT_PLAYER1, CellState.BISHOP_PLAYER1, CellState.QUEEN_PLAYER1,
                     CellState.KING_PLAYER1, CellState.BISHOP_PLAYER1, CellState.KNIGHT_PLAYER1, CellState.ROOK_PLAYER1 }
     };
+    private Winner winner = Winner.NONE;
     private Player turn = Player.PLAYER1;
     private boolean castlingKingsidePlayer1 = true;
     private boolean castlingQueensidePlayer1 = true;
     private boolean castlingKingsidePlayer2 = true;
     private boolean castlingQueensidePlayer2 = true;
+    private List<Cell> castling;
     private Cell enPassant = null;
+    private Cell promotion = null;
+    private CellState promotedPiece = null;
 
     public Player getTurn() {
-        return turn;
+        return this.turn;
     }
 
     public CellState[][] getBoard() {
-        return board;
+        return this.board;
+    }
+
+    public CellState getPromotedPiece() {
+        return promotedPiece;
+    }
+
+    public Cell getEnPassant() {
+        return enPassant != null && this.getPiece(enPassant) == CellState.EMPTY ? enPassant : null;
+    }
+
+    public List<Cell> getCastling() {
+        return castling;
+    }
+
+    public Winner getWinner() {
+        return winner;
     }
 
     private CellState getPiece(Cell cell) {
-        switch (board[cell.getX()][cell.getY()]) {
+        switch (this.board[cell.getX()][cell.getY()]) {
             case PAWN_PLAYER1:
             case ROOK_PLAYER1:
             case KNIGHT_PLAYER1:
@@ -72,19 +96,19 @@ public class Chess {
 
     private boolean isKing(Cell cell) {
         int x = cell.getX(), y = cell.getY();
-        return board[x][y] == CellState.KING_PLAYER1 || board[x][y] == CellState.KING_PLAYER2;
+        return this.board[x][y] == CellState.KING_PLAYER1 || this.board[x][y] == CellState.KING_PLAYER2;
     }
 
     private List<Cell> performCastling(Cell beginCell, Cell endCell) {
         int or = beginCell.getX(), oc = beginCell.getY();
         int dr = endCell.getX(), dc = endCell.getY();
         if (Math.abs(dc - oc) == 2) {
-            int a = (board[or][oc] == CellState.KING_PLAYER1) ? dr : 0;
+            int a = this.board[or][oc] == CellState.KING_PLAYER1 ? dr : 0;
             int b = dc - oc == 2 ? dc - 1 : dc + 1;
             int c = dc - oc == 2 ? dc + 1 : dc - 2;
-            if (isKing(beginCell)) {
-                board[a][b] = board[a][c];
-                board[a][c] = CellState.EMPTY;
+            if (this.isKing(beginCell)) {
+                this.board[a][b] = this.board[a][c];
+                this.board[a][c] = CellState.EMPTY;
                 return Arrays.asList(new Cell(a, c), new Cell(a, b));
             }
         }
@@ -93,33 +117,33 @@ public class Chess {
 
     private void setCastling(Cell beginCell) {
         int or = beginCell.getX(), oc = beginCell.getY();
-        if (board[or][oc] == CellState.KING_PLAYER1
-                || (board[or][oc] == CellState.ROOK_PLAYER1 && or == rows - 1 && oc == cols - 1)) {
+        if (this.board[or][oc] == CellState.KING_PLAYER1
+                || (this.board[or][oc] == CellState.ROOK_PLAYER1 && or == rows - 1 && oc == cols - 1)) {
             castlingKingsidePlayer1 = false;
         }
-        if (board[or][oc] == CellState.KING_PLAYER1
-                || (board[or][oc] == CellState.ROOK_PLAYER1 && or == rows - 1 && oc == 0)) {
+        if (this.board[or][oc] == CellState.KING_PLAYER1
+                || (this.board[or][oc] == CellState.ROOK_PLAYER1 && or == rows - 1 && oc == 0)) {
             castlingQueensidePlayer1 = false;
         }
-        if (board[or][oc] == CellState.KING_PLAYER2
-                || (board[or][oc] == CellState.ROOK_PLAYER2 && or == 0 && oc == cols - 1)) {
+        if (this.board[or][oc] == CellState.KING_PLAYER2
+                || (this.board[or][oc] == CellState.ROOK_PLAYER2 && or == 0 && oc == cols - 1)) {
             castlingKingsidePlayer2 = false;
         }
-        if (board[or][oc] == CellState.KING_PLAYER2
-                || (board[or][oc] == CellState.ROOK_PLAYER2 && or == 0 && oc == 0)) {
+        if (this.board[or][oc] == CellState.KING_PLAYER2
+                || (this.board[or][oc] == CellState.ROOK_PLAYER2 && or == 0 && oc == 0)) {
             castlingQueensidePlayer2 = false;
         }
     }
 
     private boolean isPawn(Cell cell) {
         int x = cell.getX(), y = cell.getY();
-        return board[x][y] == CellState.PAWN_PLAYER1 || board[x][y] == CellState.PAWN_PLAYER2;
+        return this.board[x][y] == CellState.PAWN_PLAYER1 || this.board[x][y] == CellState.PAWN_PLAYER2;
     }
 
     private Cell getKing(CellState king) {
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                if (board[i][j] == king) {
+        for (int i = 0; i < this.rows; i++) {
+            for (int j = 0; j < this.cols; j++) {
+                if (this.board[i][j] == king) {
                     return new Cell(i, j);
                 }
             }
@@ -127,11 +151,13 @@ public class Chess {
         return null;
     }
 
-    public MoveResult move(Player player, Cell beginCell, Cell endCell) throws Exception {
-        return this.move(player, beginCell, endCell, -1);
-    }
-
-    public MoveResult move(Player player, Cell beginCell, Cell endCell, int newPiece) throws Exception {
+    public void move(Player player, Cell beginCell, Cell endCell) throws Exception {
+        if (this.winner != Winner.NONE) {
+            throw new Exception("This game is already finished.");
+        }
+        if (this.promotion != null) {
+            throw new Exception("You must choose a piece to promote.");
+        }
         /* Valores das células existem? */
         if (beginCell == null || endCell == null) {
             throw new Exception("Origin or destination cell does not exist.");
@@ -140,12 +166,12 @@ public class Chess {
         int dr = endCell.getX(), dc = endCell.getY();
         CellState currentPiece = getPiece(beginCell);
         /* É a sua vez de jogar */
-        if (turn != player) {
+        if (this.turn != player) {
             throw new Exception("It's not your turn.");
         }
         /* Você está tentando jogar uma peça sua? */
-        if ((currentPiece == CellState.PLAYER1 && turn == Player.PLAYER2)
-                || (currentPiece == CellState.PLAYER2 && turn == Player.PLAYER1)) {
+        if ((currentPiece == CellState.PLAYER1 && this.turn == Player.PLAYER2)
+                || (currentPiece == CellState.PLAYER2 && this.turn == Player.PLAYER1)) {
             throw new Exception("You can not move an opponent piece.");
         }
         /* Origem e destino devem ser diferentes */
@@ -153,7 +179,7 @@ public class Chess {
             throw new Exception("Origin and destination cells must be different.");
         }
         /* Origem e destino estão no tabuleiro? */
-        if (!onBoard(beginCell) || !onBoard(endCell)) {
+        if (!this.onBoard(beginCell) || !this.onBoard(endCell)) {
             throw new Exception("Origin or destination cell is not on board.");
         }
         /* Origem possui uma peça? */
@@ -161,48 +187,49 @@ public class Chess {
             throw new Exception("Origin cell is empty.");
         }
         /* A jogada é possível? */
-        List<Cell> moves = showPossibleMoves(beginCell);
+        List<Cell> moves = this.showPossibleMoves(beginCell);
         if (!moves.stream().anyMatch(z -> z.equals(endCell))) {
             throw new Exception("This move is invalid.");
         }
-        MoveResult result = new MoveResult();
         /* Armazenar peça para possível en passant */
-        if (isPawn(beginCell) && Math.abs(or - dr) == 1 && Math.abs(oc - dc) == 1 && board[dr][dc] == CellState.EMPTY) {
+        if (this.isPawn(beginCell) && Math.abs(or - dr) == 1 && Math.abs(oc - dc) == 1
+                && this.board[dr][dc] == CellState.EMPTY) {
             int tx = enPassant.getX(), ty = enPassant.getY();
-            board[tx][ty] = CellState.EMPTY;
-            result.setEnPassant(enPassant);
+            this.board[tx][ty] = CellState.EMPTY;
+        } else {
+            this.enPassant = null;
         }
-        if (enPassant != null && !endCell.equals(enPassant)) {
-            enPassant = null;
+        if (this.board[or][oc] == CellState.PAWN_PLAYER1 && or == 6 && dr == 4) {
+            this.enPassant = endCell;
         }
-        if (board[or][oc] == CellState.PAWN_PLAYER1 && or == 6 && dr == 4) {
-            enPassant = endCell;
-        }
-        if (board[or][oc] == CellState.PAWN_PLAYER2 && or == 1 && dr == 3) {
-            enPassant = endCell;
+        if (this.board[or][oc] == CellState.PAWN_PLAYER2 && or == 1 && dr == 3) {
+            this.enPassant = endCell;
         }
         /* Castling */
-        result.setCastling(performCastling(beginCell, endCell));
-        setCastling(beginCell);
+        this.castling = this.performCastling(beginCell, endCell);
+        this.setCastling(beginCell);
         /* Realizar movimento */
-        board[dr][dc] = addNewPiece(board[or][oc], newPiece);
-        board[or][oc] = CellState.EMPTY;
-        turn = (turn == Player.PLAYER1) ? Player.PLAYER2 : Player.PLAYER1;
-        result.setWinner(endOfGame());
-        result.setCheck(this.isCheck(turn));
-        return result;
+        this.board[dr][dc] = this.board[or][oc];
+        this.board[or][oc] = CellState.EMPTY;
+        /* Promotion */
+        if (this.isPawn(endCell) && (dr == 0 || dr == rows - 1)) {
+            this.promotion = endCell;
+        }
+        this.turn = (this.turn == Player.PLAYER1) ? Player.PLAYER2 : Player.PLAYER1;
+        this.winner = this.endOfGame();
+        // result.setCheck(this.isCheck(this.turn));
     }
 
     /* Verify end of game condition */
     private Winner endOfGame() {
         /* If is a check mate, the game ends */
-        boolean noMove = cannotMoveAnyPiece();
+        boolean noMove = this.cannotMoveAnyPiece();
         if (noMove) {
-            boolean check1 = isCheck(Player.PLAYER1);
+            boolean check1 = this.isCheck(Player.PLAYER1);
             if (check1) {
                 return Winner.PLAYER2;
             }
-            boolean check2 = isCheck(Player.PLAYER2);
+            boolean check2 = this.isCheck(Player.PLAYER2);
             if (check2) {
                 return Winner.PLAYER1;
             }
@@ -213,11 +240,11 @@ public class Chess {
 
     private boolean cannotMoveAnyPiece() {
         CellState cs = turn == Player.PLAYER1 ? CellState.PLAYER1 : CellState.PLAYER2;
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
+        for (int i = 0; i < this.rows; i++) {
+            for (int j = 0; j < this.cols; j++) {
                 Cell cell = new Cell(i, j);
-                if (getPiece(cell) == cs) {
-                    List<Cell> moves = showPossibleMoves(cell);
+                if (this.getPiece(cell) == cs) {
+                    List<Cell> moves = this.showPossibleMoves(cell);
                     if (!moves.isEmpty()) {
                         return false;
                     }
@@ -227,15 +254,19 @@ public class Chess {
         return true;
     }
 
+    public boolean isCheck() {
+        return this.isCheck(this.turn);
+    }
+
     private boolean isCheck(Player player) {
         CellState cs = player == Player.PLAYER1 ? CellState.KING_PLAYER1 : CellState.KING_PLAYER2;
-        Cell king = getKing(cs);
+        Cell king = this.getKing(cs);
         CellState op = player == Player.PLAYER1 ? CellState.PLAYER2 : CellState.PLAYER1;
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
+        for (int i = 0; i < this.rows; i++) {
+            for (int j = 0; j < this.cols; j++) {
                 Cell cell = new Cell(i, j);
-                if (getPiece(cell) == op) {
-                    List<Cell> moves = possibleMoves(cell);
+                if (this.getPiece(cell) == op) {
+                    List<Cell> moves = this.possibleMoves(cell);
                     if (moves.stream().filter(elem -> elem.equals(king)).count() > 0) {
                         return true;
                     }
@@ -247,21 +278,21 @@ public class Chess {
 
     public List<Cell> showPossibleMoves(Cell cell) {
         List<Cell> ret = new ArrayList<>();
-        CellState piece = getPiece(cell);
-        if ((piece == CellState.PLAYER1 && turn == Player.PLAYER1)
-                || (piece == CellState.PLAYER2 && turn == Player.PLAYER2)) {
-            List<Cell> pm = possibleMoves(cell);
+        CellState piece = this.getPiece(cell);
+        if ((piece == CellState.PLAYER1 && this.turn == Player.PLAYER1)
+                || (piece == CellState.PLAYER2 && this.turn == Player.PLAYER2)) {
+            List<Cell> pm = this.possibleMoves(cell);
             int or = cell.getX(), oc = cell.getY();
-            boolean check = isCheck(turn);
-            boolean bIsKing = isKing(cell);
+            boolean check = this.isCheck(turn);
+            boolean bIsKing = this.isKing(cell);
             Chess chess = new Chess();
             pm.forEach(m -> {
                 int dr = m.getX(), dc = m.getY();
 
-                CellState[][] boardCopy = new CellState[rows][cols];
-                for (int i = 0; i < board.length; i++) {
-                    CellState[] row = board[i];
-                    System.arraycopy(row, 0, boardCopy[i], 0, board.length);
+                CellState[][] boardCopy = new CellState[this.rows][this.cols];
+                for (int i = 0; i < this.board.length; i++) {
+                    CellState[] row = this.board[i];
+                    System.arraycopy(row, 0, boardCopy[i], 0, this.board.length);
                 }
 
                 boardCopy[dr][dc] = boardCopy[or][oc];
@@ -286,36 +317,38 @@ public class Chess {
     }
 
     private void setBoard(CellState[][] matrix) {
-        board = matrix;
+        this.board = matrix;
     }
 
-    private CellState addNewPiece(CellState oldPiece, int newPiece) {
-        if (newPiece > -1) {
-            CellState[] player1 = new CellState[] { CellState.ROOK_PLAYER1, CellState.KNIGHT_PLAYER1,
-                    CellState.BISHOP_PLAYER1, CellState.QUEEN_PLAYER1 };
-            CellState[] player2 = new CellState[] { CellState.ROOK_PLAYER2, CellState.KNIGHT_PLAYER2,
-                    CellState.BISHOP_PLAYER2, CellState.QUEEN_PLAYER2 };
-            return (turn == Player.PLAYER1) ? player1[newPiece] : player2[newPiece];
-        }
-        return oldPiece;
+    public void promote(int newPiece) {
+        CellState[] player1 = new CellState[] { CellState.ROOK_PLAYER1, CellState.KNIGHT_PLAYER1,
+                CellState.BISHOP_PLAYER1, CellState.QUEEN_PLAYER1 };
+        CellState[] player2 = new CellState[] { CellState.ROOK_PLAYER2, CellState.KNIGHT_PLAYER2,
+                CellState.BISHOP_PLAYER2, CellState.QUEEN_PLAYER2 };
+        CellState piece = (this.turn == Player.PLAYER1) ? player1[newPiece] : player2[newPiece];
+        this.promotedPiece = piece;
+        this.board[this.promotion.getX()][this.promotion.getY()] = piece;
+        this.promotion = null;
+        this.turn = (this.turn == Player.PLAYER1) ? Player.PLAYER2 : Player.PLAYER1;
+        this.winner = this.endOfGame();
     }
 
     private List<Cell> possibleMoves(Cell cell) {
         int x = cell.getX(), y = cell.getY();
         final List<Cell> moves = new ArrayList<>();
         Cell tempCell;
-        Function<List<Cell>, List<Cell>> addMoves = (positions) -> {
+        Function<List<Cell>, List<Cell>> addMoves = positions -> {
             positions.forEach(temp -> {
-                if (onBoard(temp) && getPiece(temp) != getPiece(cell)) {
+                if (this.onBoard(temp) && this.getPiece(temp) != this.getPiece(cell)) {
                     moves.add(temp);
                 }
             });
             return moves;
         };
-        if (isPawn(cell)) {
+        if (this.isPawn(cell)) {
             int a, b, c;
             CellState d, e;
-            if (board[x][y] == CellState.PAWN_PLAYER1) {
+            if (this.board[x][y] == CellState.PAWN_PLAYER1) {
                 a = x - 1;
                 b = x - 2;
                 c = 6;
@@ -329,35 +362,38 @@ public class Chess {
                 e = CellState.PAWN_PLAYER1;
             }
             tempCell = new Cell(a, y);
-            if (onBoard(tempCell) && getPiece(tempCell) == CellState.EMPTY) {
+            if (this.onBoard(tempCell) && this.getPiece(tempCell) == CellState.EMPTY) {
                 moves.add(tempCell);
             }
             tempCell = new Cell(b, y);
-            if (x == c && getPiece(new Cell(a, y)) == CellState.EMPTY && getPiece(tempCell) == CellState.EMPTY) {
+            if (x == c && this.getPiece(new Cell(a, y)) == CellState.EMPTY
+                    && this.getPiece(tempCell) == CellState.EMPTY) {
                 moves.add(tempCell);
             }
             tempCell = new Cell(a, y - 1);
-            if (onBoard(tempCell) && getPiece(tempCell) == d) {
+            if (this.onBoard(tempCell) && this.getPiece(tempCell) == d) {
                 moves.add(tempCell);
             }
             tempCell = new Cell(a, y + 1);
-            if (onBoard(tempCell) && getPiece(tempCell) == d) {
+            if (this.onBoard(tempCell) && this.getPiece(tempCell) == d) {
                 moves.add(tempCell);
             }
             tempCell = new Cell(x, y - 1);
-            if (enPassant != null && onBoard(tempCell) && board[x][y - 1] == e && tempCell.equals(enPassant)) {
+            if (this.enPassant != null && this.onBoard(tempCell) && this.board[x][y - 1] == e
+                    && tempCell.equals(enPassant)) {
                 moves.add(new Cell(a, y - 1));
             }
             tempCell = new Cell(x, y + 1);
-            if (enPassant != null && onBoard(tempCell) && board[x][y + 1] == e && tempCell.equals(enPassant)) {
+            if (this.enPassant != null && this.onBoard(tempCell) && this.board[x][y + 1] == e
+                    && tempCell.equals(enPassant)) {
                 moves.add(new Cell(a, y + 1));
             }
-        } else if (board[x][y] == CellState.KNIGHT_PLAYER1 || board[x][y] == CellState.KNIGHT_PLAYER2) {
+        } else if (this.board[x][y] == CellState.KNIGHT_PLAYER1 || this.board[x][y] == CellState.KNIGHT_PLAYER2) {
             List<Cell> positions = Arrays.asList(new Cell(x - 2, y - 1), new Cell(x - 2, y + 1),
                     new Cell(x + 2, y - 1), new Cell(x + 2, y + 1), new Cell(x - 1, y - 2), new Cell(x - 1, y + 2),
                     new Cell(x + 1, y - 2), new Cell(x + 1, y + 2));
             addMoves.apply(positions);
-        } else if (isKing(cell)) {
+        } else if (this.isKing(cell)) {
             List<Cell> positions = Arrays.asList(
                     new Cell(x - 1, y - 1), new Cell(x - 1, y), new Cell(x - 1, y + 1), new Cell(x, y - 1),
                     new Cell(x, y + 1), new Cell(x + 1, y - 1), new Cell(x + 1, y), new Cell(x + 1, y + 1));
@@ -365,7 +401,7 @@ public class Chess {
             boolean castlingKing, castlingQueen;
             int row;
             CellState rook;
-            if (board[x][y] == CellState.KING_PLAYER1) {
+            if (this.board[x][y] == CellState.KING_PLAYER1) {
                 castlingKing = castlingKingsidePlayer1;
                 castlingQueen = castlingQueensidePlayer1;
                 row = 7;
@@ -376,21 +412,22 @@ public class Chess {
                 row = 0;
                 rook = CellState.ROOK_PLAYER2;
             }
-            if (castlingKing && board[row][4] == board[x][y] && board[row][5] == CellState.EMPTY
-                    && board[row][6] == CellState.EMPTY && board[row][7] == rook) {
+            if (castlingKing && this.board[row][4] == this.board[x][y] && this.board[row][5] == CellState.EMPTY
+                    && this.board[row][6] == CellState.EMPTY && this.board[row][7] == rook) {
                 moves.add(new Cell(row, 6));
             }
-            if (castlingQueen && board[row][4] == board[x][y] && board[row][3] == CellState.EMPTY
-                    && board[row][2] == CellState.EMPTY && board[row][1] == CellState.EMPTY && board[row][0] == rook) {
+            if (castlingQueen && this.board[row][4] == this.board[x][y] && this.board[row][3] == CellState.EMPTY
+                    && this.board[row][2] == CellState.EMPTY && this.board[row][1] == CellState.EMPTY
+                    && this.board[row][0] == rook) {
                 moves.add(new Cell(row, 2));
             }
-        } else if (board[x][y] == CellState.ROOK_PLAYER1 || board[x][y] == CellState.ROOK_PLAYER2) {
+        } else if (this.board[x][y] == CellState.ROOK_PLAYER1 || this.board[x][y] == CellState.ROOK_PLAYER2) {
             moves.addAll(rookPositions(cell));
-        } else if (board[x][y] == CellState.BISHOP_PLAYER1 || board[x][y] == CellState.BISHOP_PLAYER2) {
+        } else if (this.board[x][y] == CellState.BISHOP_PLAYER1 || this.board[x][y] == CellState.BISHOP_PLAYER2) {
             moves.addAll(bishopPositions(cell));
-        } else if (board[x][y] == CellState.QUEEN_PLAYER1 || board[x][y] == CellState.QUEEN_PLAYER2) {
-            List<Cell> dg = bishopPositions(cell);
-            List<Cell> hv = rookPositions(cell);
+        } else if (this.board[x][y] == CellState.QUEEN_PLAYER1 || this.board[x][y] == CellState.QUEEN_PLAYER2) {
+            List<Cell> dg = this.bishopPositions(cell);
+            List<Cell> hv = this.rookPositions(cell);
             moves.addAll(dg);
             moves.addAll(hv);
         }
@@ -400,12 +437,12 @@ public class Chess {
     private List<Cell> selectPositions(Cell cell, List<Cell> directions) {
         List<Cell> moves = new ArrayList<>();
         int row = cell.getX(), col = cell.getY();
-        CellState piece = getPiece(cell);
+        CellState piece = this.getPiece(cell);
         for (Cell dir : directions) {
             int x = dir.getX(), y = dir.getY();
             Cell c;
-            for (int k = row + x, l = col + y; onBoard(c = new Cell(k, l)); k += x, l += y) {
-                CellState tempPiece = getPiece(c);
+            for (int k = row + x, l = col + y; this.onBoard(c = new Cell(k, l)); k += x, l += y) {
+                CellState tempPiece = this.getPiece(c);
                 if (tempPiece == CellState.EMPTY || piece != tempPiece) {
                     moves.add(c);
                 }
@@ -419,20 +456,20 @@ public class Chess {
 
     private List<Cell> rookPositions(Cell cell) {
         List<Cell> lin = Arrays.asList(new Cell(-1, 0), new Cell(1, 0), new Cell(0, -1), new Cell(0, 1));
-        return selectPositions(cell, lin);
+        return this.selectPositions(cell, lin);
     }
 
     private List<Cell> bishopPositions(Cell cell) {
         List<Cell> lin = Arrays.asList(new Cell(-1, -1), new Cell(-1, 1), new Cell(1, -1), new Cell(1, 1));
-        return selectPositions(cell, lin);
+        return this.selectPositions(cell, lin);
     }
 
     public void printBoard() {
-        for (int i = 0; i <= board.length * 5; i++) {
+        for (int i = 0; i <= this.board.length * 5; i++) {
             System.out.print("-");
         }
         System.out.println("");
-        for (CellState[] b : board) {
+        for (CellState[] b : this.board) {
             for (CellState c : b) {
                 System.out.print("| ");
                 switch (c) {
@@ -493,26 +530,22 @@ public class Chess {
                 System.out.print(" ");
             }
             System.out.println("|");
-            for (int i = 0; i <= board.length * 5; i++) {
+            for (int i = 0; i <= this.board.length * 5; i++) {
                 System.out.print("-");
             }
             System.out.println("");
         }
     }
 
-    public CellState[][] rotateBoard() {
-        CellState[][] transMatrix = new CellState[rows][cols];
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                transMatrix[i][j] = board[rows - i - 1][cols - j - 1];
-            }
-        }
-        return transMatrix;
-    }
-
     public Cell getRotatedCell(Cell cell) {
         int or = rows - cell.getX() - 1;
         int oc = cols - cell.getY() - 1;
         return new Cell(or, oc);
+    }
+
+    public static void main(String[] args) {
+        Chess game = new Chess();
+        Message message = new Message(ConnectionType.OPEN, game);
+        System.out.println(JsonbBuilder.create().toJson(message));
     }
 }
