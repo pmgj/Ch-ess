@@ -151,7 +151,6 @@ class GUI {
                 this.showPossibleMoves(data.possibleMoves);
                 break;
             case ConnectionType.MOVE_PIECE:
-                let mr = data.moveResult;
                 if (game.winner === Winner.NONE) {
                     this.movePiece(data.beginCell, data.endCell);
                     if (game.enPassant) {
@@ -161,7 +160,7 @@ class GUI {
                     if (game.castling) {
                         this.movePiece(game.castling[0], game.castling[1]);
                     }
-                    if (this.player === game.turn && mr.promote) {
+                    if (this.player === game.turn && game.promotionCell) {
                         let select = document.querySelector("select");
                         select.style.display = "block";
                         select.onchange = () => {

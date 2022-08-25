@@ -41,7 +41,8 @@ public class Chess {
     private boolean castlingQueensidePlayer2 = true;
     private List<Cell> castling;
     private Cell enPassant = null;
-    private Cell promotion = null;
+    private boolean promotion = false;
+    private Cell promotionCell = null;
     private CellState promotedPiece = null;
 
     public Player getTurn() {
@@ -50,10 +51,6 @@ public class Chess {
 
     public CellState[][] getBoard() {
         return this.board;
-    }
-
-    public CellState getPromotedPiece() {
-        return promotedPiece;
     }
 
     public Cell getEnPassant() {
@@ -66,6 +63,14 @@ public class Chess {
 
     public Winner getWinner() {
         return winner;
+    }
+
+    public Cell getPromotionCell() {
+        return promotionCell;
+    }
+
+    public CellState getPromotedPiece() {
+        return promotedPiece;
     }
 
     private CellState getPiece(Cell cell) {
@@ -155,7 +160,7 @@ public class Chess {
         if (this.winner != Winner.NONE) {
             throw new Exception("This game is already finished.");
         }
-        if (this.promotion != null) {
+        if (this.promotion) {
             throw new Exception("You must choose a piece to promote.");
         }
         /* Valores das células existem? */
@@ -213,11 +218,12 @@ public class Chess {
         this.board[or][oc] = CellState.EMPTY;
         /* Promotion */
         if (this.isPawn(endCell) && (dr == 0 || dr == rows - 1)) {
-            this.promotion = endCell;
+            this.promotion = true;
+            this.promotionCell = endCell;
+            return;
         }
         this.turn = (this.turn == Player.PLAYER1) ? Player.PLAYER2 : Player.PLAYER1;
         this.winner = this.endOfGame();
-        // result.setCheck(this.isCheck(this.turn));
     }
 
     /* Verify end of game condition */
@@ -325,11 +331,11 @@ public class Chess {
                 CellState.BISHOP_PLAYER1, CellState.QUEEN_PLAYER1 };
         CellState[] player2 = new CellState[] { CellState.ROOK_PLAYER2, CellState.KNIGHT_PLAYER2,
                 CellState.BISHOP_PLAYER2, CellState.QUEEN_PLAYER2 };
-        CellState piece = (this.turn == Player.PLAYER1) ? player1[newPiece] : player2[newPiece];
+        CellState piece = this.turn == Player.PLAYER1 ? player1[newPiece] : player2[newPiece];
         this.promotedPiece = piece;
-        this.board[this.promotion.getX()][this.promotion.getY()] = piece;
-        this.promotion = null;
-        this.turn = (this.turn == Player.PLAYER1) ? Player.PLAYER2 : Player.PLAYER1;
+        this.board[this.promotionCell.getX()][this.promotionCell.getY()] = piece;
+        this.promotion = false;
+        this.turn = this.turn == Player.PLAYER1 ? Player.PLAYER2 : Player.PLAYER1;
         this.winner = this.endOfGame();
     }
 

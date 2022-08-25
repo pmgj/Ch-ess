@@ -42,8 +42,9 @@ public class Endpoint {
     public void onMessage(Session session, MoveMessage message) throws IOException, EncodeException {
         Cell beginCell = message.getBeginCell(), endCell = message.getEndCell();
         if (message.getPromote() != -1) {
-            // game.promote(message.getPromote());
-            // CellState piece = game.getPromotedPiece();
+            game.promote(message.getPromote());
+            s1.getBasicRemote().sendObject(new Message(ConnectionType.PROMOTED_PIECE, game));
+            s2.getBasicRemote().sendObject(new Message(ConnectionType.PROMOTED_PIECE, game));
             return;
         }
         if (endCell == null) {
@@ -63,6 +64,7 @@ public class Endpoint {
             return;
         }
         try {
+            game.move(session == s1 ? Player.PLAYER1 : Player.PLAYER2, beginCell, endCell);
             s1.getBasicRemote().sendObject(new Message(ConnectionType.MOVE_PIECE, game, beginCell, endCell));
             s2.getBasicRemote().sendObject(new Message(ConnectionType.MOVE_PIECE, game, beginCell, endCell));
         } catch (Exception ex) {
