@@ -1,5 +1,5 @@
 import ConnectionType from "./ConnectionType.js";
-import CellState from "./CellState.js";
+import State from "./State.js";
 import Cell from "./Cell.js";
 import Winner from "./Winner.js";
 import Player from "./Player.js";
@@ -10,7 +10,6 @@ class GUI {
         this.player = null;
         this.table = null;
         this.origin = null;
-        this.images = { PAWN_PLAYER1: "Peao-Branco.svg", ROOK_PLAYER1: "Torre-Branca.svg", KNIGHT_PLAYER1: "Cavalo-Branco.svg", BISHOP_PLAYER1: "Bispo-Branco.svg", QUEEN_PLAYER1: "Rainha-Branca.svg", KING_PLAYER1: "Rei-Branco.svg", PAWN_PLAYER2: "Peao-Preto.svg", ROOK_PLAYER2: "Torre-Preta.svg", KNIGHT_PLAYER2: "Cavalo-Preto.svg", BISHOP_PLAYER2: "Bispo-Preto.svg", QUEEN_PLAYER2: "Rainha-Preta.svg", KING_PLAYER2: "Rei-Preto.svg" };
         this.closeCodes = { ENDGAME: { code: 4000, description: "End of game." }, ADVERSARY_QUIT: { code: 4001, description: "The opponent quit the game" } };
     }
     writeResponse(text) {
@@ -34,9 +33,9 @@ class GUI {
             let tr = document.createElement("tr");
             for (let j = 0; j < transMatrix[i].length; j++) {
                 let td = document.createElement("td");
-                if (transMatrix[i][j] !== CellState.EMPTY) {
+                if (transMatrix[i][j].state !== State.EMPTY) {
                     let img = document.createElement("img");
-                    img.src = `images/${this.images[transMatrix[i][j]]}`;
+                    img.src = `images/${transMatrix[i][j].piece}-${transMatrix[i][j].state}.svg`;
                     // img.ondragstart = drag;
                     td.appendChild(img);
                 }
@@ -57,13 +56,13 @@ class GUI {
         let cell = this.table.rows[row].cells[col];
         let img = cell.firstChild;
         if (img) {
-            if (img.src.indexOf("Branc") !== -1) {
-                return CellState.PLAYER1;
+            if (img.src.indexOf("PLAYER1") !== -1) {
+                return State.PLAYER1;
             } else {
-                return CellState.PLAYER2;
+                return State.PLAYER2;
             }
         } else {
-            return CellState.EMPTY;
+            return State.EMPTY;
         }
     }
     unselectCells() {
@@ -179,10 +178,10 @@ class GUI {
                 this.hidePossibleMoves();
                 break;
             case ConnectionType.PROMOTED_PIECE:
-                let piece = game.promotedPiece;
+                let promotedPiece = game.promotedPiece;
                 let cell = this.getCorrectCell(game.promotionCell);
                 let td = this.getTableData(cell);
-                td.innerHTML = `<img src="images/${this.images[piece]}" alt="" />`;
+                td.innerHTML = `<img src="images/${promotedPiece}-${game.turn === Player.PLAYER1 ? Player.PLAYER2 : Player.PLAYER1}.svg" alt="" />`;
                 let check = game.check ? "Check!" : "";
                 this.writeResponse(this.player === game.turn ? `${check} It's your turn.` : `${check} Wait for your turn.`);
             break;

@@ -1,7 +1,44 @@
 package model;
 
-public enum CellState {
-    PLAYER1, KING_PLAYER1, QUEEN_PLAYER1, ROOK_PLAYER1, BISHOP_PLAYER1, 
-    KNIGHT_PLAYER1, PAWN_PLAYER1, EMPTY, KING_PLAYER2, QUEEN_PLAYER2,
-    ROOK_PLAYER2, BISHOP_PLAYER2, KNIGHT_PLAYER2, PAWN_PLAYER2, PLAYER2
+public class CellState {
+    private State state;
+    private Piece piece;
+
+    public CellState() {
+
+    }
+
+    public CellState(State state, Piece piece) {
+        this.state = state;
+        this.piece = piece;
+    }
+
+    public CellState(State state) {
+        this.state = state;
+    }
+
+    public Piece getPiece() {
+        return piece;
+    }
+
+    public void setPiece(Piece piece) {
+        this.piece = piece;
+    }
+
+    public State getState() {
+        return state;
+    }
+
+    public void setState(State state) {
+        this.state = state;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(!(obj instanceof CellState)) {
+            return false;
+        }
+        CellState temp = (CellState) obj;
+        return this.piece == temp.piece && this.state == temp.state;
+    }
 }
