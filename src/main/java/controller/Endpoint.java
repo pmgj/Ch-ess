@@ -42,7 +42,7 @@ public class Endpoint {
     public void onMessage(Session session, MoveMessage message) throws IOException, EncodeException {
         Cell beginCell = message.getBeginCell(), endCell = message.getEndCell();
         try {
-            if (message.getPromote() != -1) {
+            if (message.getPromote() != null) {
                 game.promote(message.getPromote());
                 s1.getBasicRemote().sendObject(new Message(ConnectionType.PROMOTED_PIECE, game));
                 s2.getBasicRemote().sendObject(new Message(ConnectionType.PROMOTED_PIECE, game));

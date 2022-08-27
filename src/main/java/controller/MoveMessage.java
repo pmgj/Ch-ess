@@ -1,11 +1,12 @@
 package controller;
 
 import model.Cell;
+import model.Piece;
 
 public class MoveMessage {
     private Cell beginCell;
     private Cell endCell;
-    private int promote = -1;
+    private Piece promote;
 
     public Cell getBeginCell() {
         return beginCell;
@@ -23,11 +24,11 @@ public class MoveMessage {
         this.endCell = endCell;
     }
 
-    public int getPromote() {
+    public Piece getPromote() {
         return promote;
     }
 
-    public void setPromote(int promote) {
+    public void setPromote(Piece promote) {
         this.promote = promote;
     }
 }

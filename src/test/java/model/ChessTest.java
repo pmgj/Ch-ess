@@ -372,7 +372,7 @@ public class ChessTest {
         } catch (Exception ex) {
         }
         try {
-            c.promote(0);
+            c.promote(Piece.ROOK);
             Assertions.assertSame(Winner.NONE, c.getWinner());
         } catch (Exception ex) {
             Assertions.fail(ex.getMessage());
@@ -389,7 +389,7 @@ public class ChessTest {
         } catch (Exception ex) {
         }
         try {
-            c.promote(1);
+            c.promote(Piece.KNIGHT);
             Assertions.assertSame(Winner.NONE, c.getWinner());
         } catch (Exception ex) {
             Assertions.fail(ex.getMessage());

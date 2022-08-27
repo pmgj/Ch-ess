@@ -161,10 +161,15 @@ class GUI {
                     }
                     if (this.player === game.turn && game.promotionCell) {
                         let select = document.querySelector("select");
+                        for(let piece of game.promotionList) {
+                            let option = document.createElement("option");
+                            option.textContent = piece;
+                            select.appendChild(option);
+                        }
                         select.className = "show";
                         select.onchange = () => {
-                            this.ws.send(JSON.stringify({ promote: parseInt(select.value) }));
-                            select.value = -1;
+                            this.ws.send(JSON.stringify({ promote: select.value }));
+                            select.innerHTML = "";
                             select.className = "hide";
                         };
                     }

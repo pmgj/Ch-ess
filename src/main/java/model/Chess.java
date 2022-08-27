@@ -316,12 +316,14 @@ public class Chess {
         return ret;
     }
 
-    public void promote(int newPiece) throws Exception {
+    public List<Piece> getPromotionList() {
+        return List.of(Piece.ROOK, Piece.KNIGHT, Piece.BISHOP, Piece.QUEEN);
+    }
+
+    public void promote(Piece piece) throws Exception {
         if (!this.promotion) {
             throw new Exception("You can not promote a piece right now.");
         }
-        Piece[] pieces = new Piece[] { Piece.ROOK, Piece.KNIGHT, Piece.BISHOP, Piece.QUEEN };
-        Piece piece = pieces[newPiece];
         this.promotedPiece = piece;
         this.board[this.promotionCell.getX()][this.promotionCell.getY()] = new CellState(
                 this.turn == Player.PLAYER1 ? State.PLAYER1 : State.PLAYER2, piece);
