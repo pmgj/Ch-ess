@@ -74,7 +74,9 @@ public class Endpoint {
 
     @OnClose
     public void onClose(Session session, CloseReason reason) throws IOException, EncodeException {
+        System.out.println(reason.getCloseCode().getCode());
         switch (reason.getCloseCode().getCode()) {
+            case 1000:
             case 4000:
                 if (session == s1) {
                     s1 = null;
@@ -82,12 +84,13 @@ public class Endpoint {
                     s2 = null;
                 }
                 break;
+            case 1001:
             case 4001:
                 if (session == s1) {
-                    s2.getBasicRemote().sendObject(new Message(ConnectionType.MOVE_PIECE, game));
+                    s2.getBasicRemote().sendObject(new Message(ConnectionType.QUIT_GAME, Player.PLAYER2));
                     s1 = null;
                 } else {
-                    s1.getBasicRemote().sendObject(new Message(ConnectionType.MOVE_PIECE, game));
+                    s1.getBasicRemote().sendObject(new Message(ConnectionType.QUIT_GAME, Player.PLAYER1));
                     s2 = null;
                 }
                 break;

@@ -127,11 +127,12 @@ class GUI {
         let tds = document.querySelectorAll("td");
         tds.forEach(td => td.className = "");
     }
-    endGame(type) {
+    endGame(closeObj, winner) {
         this.unsetEvents();
+        this.ws.close(closeObj.code, closeObj.description);
         this.ws = null;
         this.setButtonText(true);
-        this.writeResponse(`Game Over! ${(type === "DRAW") ? "Draw!" : (type === this.player ? "You win!" : "You lose!")}`);
+        this.writeResponse(`Game Over! ${(winner === "DRAW") ? "Draw!" : (winner === this.player ? "You win!" : "You lose!")}`);
     }
     onMessage(evt) {
         let data = JSON.parse(evt.data);
@@ -161,7 +162,7 @@ class GUI {
                     }
                     if (this.player === game.turn && game.promotionCell) {
                         let select = document.querySelector("select");
-                        for(let piece of game.promotionList) {
+                        for (let piece of game.promotionList) {
                             let option = document.createElement("option");
                             option.textContent = piece;
                             select.appendChild(option);
@@ -176,8 +177,7 @@ class GUI {
                     let check = game.check ? "Check!" : "";
                     this.writeResponse(this.player === game.turn ? `${check} It's your turn.` : `${check} Wait for your turn.`);
                 } else {
-                    this.ws.close(this.closeCodes.ENDGAME.code, this.closeCodes.ENDGAME.description);
-                    this.endGame(game.winner);
+                    this.endGame(this.closeCodes.ENDGAME, game.winner);
                     this.movePiece(data.beginCell, data.endCell);
                 }
                 this.hidePossibleMoves();
@@ -189,13 +189,15 @@ class GUI {
                 td.innerHTML = `<img src="images/${promotedPiece}-${game.turn === Player.PLAYER1 ? Player.PLAYER2 : Player.PLAYER1}.svg" alt="" />`;
                 let check = game.check ? "Check!" : "";
                 this.writeResponse(this.player === game.turn ? `${check} It's your turn.` : `${check} Wait for your turn.`);
-            break;
+                break;
+            case ConnectionType.QUIT_GAME:
+                this.endGame(1000, data.turn);
+                break;
         }
     }
     startGame() {
         if (this.ws) {
-            this.ws.close(this.closeCodes.ADVERSARY_QUIT.code, this.closeCodes.ADVERSARY_QUIT.description);
-            this.endGame();
+            this.endGame(this.closeCodes.ADVERSARY_QUIT);
         } else {
             this.ws = new WebSocket(`ws://${document.location.host}${document.location.pathname}chess`);
             this.ws.onmessage = this.onMessage.bind(this);
