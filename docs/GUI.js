@@ -44,12 +44,14 @@ class GUI {
         let td = evt.currentTarget;
         if (this.origin === null) {
             this.origin = td;
+            this.showPossibleMoves(this.origin);
         } else {
             this.innerPlay(this.origin, td);
         }
     }
     drag(evt) {
         this.origin = evt.currentTarget.parentNode;
+        this.showPossibleMoves(this.origin);
     }
     allowDrop(evt) {
         evt.preventDefault();
@@ -59,6 +61,7 @@ class GUI {
         this.innerPlay(this.origin, evt.currentTarget);
     }
     innerPlay(beginCell, endCell) {
+        this.hidePossibleMoves();
         let begin = this.coordinates(beginCell);
         let end = this.coordinates(endCell);
         try {
@@ -71,6 +74,22 @@ class GUI {
             this.setMessage(ex.message);
         }
         this.origin = null;
+    }
+    showPossibleMoves(cell) {
+        let coords = this.coordinates(cell);
+        let moves = this.game.possibleMoves(coords);
+        moves.push(coords);
+        for (let {x, y} of moves) {
+            let tempCell = document.querySelector(`tr:nth-child(${x + 1}) td:nth-child(${y + 1})`);
+            tempCell.className = 'selected';
+        }
+        if (moves.length === 1) {
+            this.setMessage("No possible moves for this piece. ");
+        }
+    }
+    hidePossibleMoves() {
+        let cells = document.querySelectorAll("td");
+        cells.forEach(c => c.className = '');
     }
 }
 let gui = new GUI();

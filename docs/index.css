@@ -28,6 +28,10 @@ img {
     text-align: center;
 }
 
+.selected {
+    border: 3px solid red;
+}
+
 @media (max-width: 400px) {
     td, img {
         width: 30px;
