@@ -65,16 +65,6 @@ class GUI {
             return State.EMPTY;
         }
     }
-    unselectCells() {
-        let rows = this.table.rows;
-        for (let i = 0; i < rows.length; i++) {
-            let row = rows[i];
-            for (let j = 0; j < row.cells.length; j++) {
-                let cell = row.cells[j];
-                cell.className = "";
-            }
-        }
-    }
     getTableData({ x, y }) {
         return this.table.rows[x].cells[y];
     }
@@ -101,6 +91,7 @@ class GUI {
         } else {
             this.ws.send(JSON.stringify({ beginCell: this.getCorrectCell(this.coordinates(this.origin)), endCell: this.getCorrectCell(this.coordinates(td)) }));
             this.origin = null;
+            this.hidePossibleMoves();
         }
     }
     unsetEvents() {
@@ -180,7 +171,6 @@ class GUI {
                     this.endGame(this.closeCodes.ENDGAME, game.winner);
                     this.movePiece(data.beginCell, data.endCell);
                 }
-                this.hidePossibleMoves();
                 break;
             case ConnectionType.PROMOTED_PIECE:
                 let promotedPiece = game.promotedPiece;

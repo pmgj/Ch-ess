@@ -74,7 +74,6 @@ public class Endpoint {
 
     @OnClose
     public void onClose(Session session, CloseReason reason) throws IOException, EncodeException {
-        System.out.println(reason.getCloseCode().getCode());
         switch (reason.getCloseCode().getCode()) {
             case 1000:
             case 4000:
