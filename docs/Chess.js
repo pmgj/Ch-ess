@@ -51,8 +51,8 @@ export default class Chess {
         if (!beginCell || !endCell) {
             throw new Error("The value of one of the cells does not exist.");
         }
-        let currentPiece = this.getPiece(beginCell);
-        if ((currentPiece === State.PLAYER1 && this.turn === Player.PLAYER2) || (currentPiece === State.PLAYER2 && this.turn === Player.PLAYER1)) {
+        let currentState = this.getState(beginCell);
+        if ((currentState === State.PLAYER1 && this.turn === Player.PLAYER2) || (currentState === State.PLAYER2 && this.turn === Player.PLAYER1)) {
             throw new Error("It's not your turn.");
         }
         if (beginCell.equals(endCell)) {
@@ -61,7 +61,7 @@ export default class Chess {
         if (!this.onBoard(beginCell) || !this.onBoard(endCell)) {
             throw new Error("Origin or destination are not in the board.");
         }
-        if (currentPiece === State.EMPTY) {
+        if (currentState === State.EMPTY) {
             throw new Error("Origin does not have a piece.");
         }
         /* Realizar movimento */
@@ -69,7 +69,7 @@ export default class Chess {
         this.board[or][oc] = new CellState(State.EMPTY);
         this.turn = (this.turn === Player.PLAYER1) ? Player.PLAYER2 : Player.PLAYER1;
     }
-    getPiece({ x, y }) {
+    getState({ x, y }) {
         return this.board[x][y].getState();
     }
     onBoard({ x, y }) {

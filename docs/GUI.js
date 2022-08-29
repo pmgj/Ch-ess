@@ -17,9 +17,12 @@ class GUI {
                 if (tab[i][j].state !== State.EMPTY) {
                     let img = document.createElement("img");
                     img.src = `images/${tab[i][j].piece}-${tab[i][j].state}.svg`;
+                    img.ondragstart = this.drag.bind(this);
                     td.appendChild(img);
                 }
                 td.onclick = this.play.bind(this);
+                td.ondragover = this.allowDrop;
+                td.ondrop = this.drop.bind(this);
                 tr.appendChild(td);
             }
             tbody.appendChild(tr);
@@ -42,19 +45,32 @@ class GUI {
         if (this.origin === null) {
             this.origin = td;
         } else {
-            let begin = this.coordinates(this.origin);
-            let end = this.coordinates(td);
-            try {
-                this.game.move(begin, end);
-                let image = this.origin.firstChild;
-                td.innerHTML = "";
-                td.appendChild(image);
-                this.changeMessage();
-            } catch (ex) {
-                this.setMessage(ex.message);
-            }
-            this.origin = null;
+            this.innerPlay(this.origin, td);
         }
+    }
+    drag(evt) {
+        this.origin = evt.currentTarget.parentNode;
+    }
+    allowDrop(evt) {
+        evt.preventDefault();
+    }
+    drop(evt) {
+        evt.preventDefault();
+        this.innerPlay(this.origin, evt.currentTarget);
+    }
+    innerPlay(beginCell, endCell) {
+        let begin = this.coordinates(beginCell);
+        let end = this.coordinates(endCell);
+        try {
+            this.game.move(begin, end);
+            let image = beginCell.firstChild;
+            endCell.innerHTML = "";
+            endCell.appendChild(image);
+            this.changeMessage();
+        } catch(ex) {
+            this.setMessage(ex.message);
+        }
+        this.origin = null;
     }
 }
 let gui = new GUI();
