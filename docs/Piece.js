@@ -4,5 +4,5 @@ export default Object.freeze({
     ROOK: "ROOK",
     BISHOP: "BISHOP",
     KNIGHT: "KNIGHT",
-    PAWN: "PAWN",
+    PAWN: "PAWN"
 });

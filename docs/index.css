@@ -24,6 +24,10 @@ img {
     vertical-align: middle;
 }
 
+#message {
+    text-align: center;
+}
+
 @media (max-width: 400px) {
     td, img {
         width: 30px;
