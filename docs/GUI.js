@@ -38,7 +38,11 @@ class GUI {
     }
     changeMessage() {
         let msgs = { PLAYER1: "White's turn.", PLAYER2: "Black's turn." };
-        this.setMessage(msgs[this.game.getTurn()]);
+        let msg = msgs[this.game.getTurn()];
+        if (this.game.isCheck(this.game.getTurn())) {
+            msg = `Check! ${msg}`;
+        }
+        this.setMessage(msg);
     }
     play(evt) {
         let td = evt.currentTarget;

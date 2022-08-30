@@ -65,7 +65,7 @@ export default class Chess {
         if (currentState === State.EMPTY) {
             throw new Error("Origin does not have a piece.");
         }
-        let moves = this.possibleMoves(beginCell);
+        let moves = this.showPossibleMoves(beginCell);
         if (!moves.some(z => z.equals(endCell))) {
             throw new Error("This move is invalid.");
         }
@@ -85,6 +85,9 @@ export default class Chess {
     }
     isEmpty({ x, y }) {
         return this.board[x][y].getState() == State.EMPTY;
+    }
+    isKing({x, y}) {
+        return this.board[x][y].getPiece() == Piece.KING;
     }
     possibleMoves(cell) {
         let { x, y } = cell;
@@ -156,5 +159,55 @@ export default class Chess {
     bishopPositions(cell) {
         let lin = [{ x: -1, y: -1 }, { x: -1, y: 1 }, { x: 1, y: -1 }, { x: 1, y: 1 }];
         return this.selectPositions(cell, lin);
+    }
+    getKing(state) {
+        for (let i = 0; i < this.rows; i++) {
+            for (let j = 0; j < this.cols; j++) {
+                let temp = new Cell(i, j);
+                if (this.isKing(temp) && this.board[i][j].getState() == state) {
+                    return temp;
+                }
+            }
+        }
+        return null;
+    }
+    isCheck() {
+        let cs = this.turn === Player.PLAYER1 ? State.PLAYER1 : State.PLAYER2;
+        let king = this.getKing(cs);
+        let op = this.turn === Player.PLAYER1 ? State.PLAYER2 : State.PLAYER1;
+        return this.board.flat().some((e, i) => {
+            let cell = new Cell(Math.floor(i / this.cols), i % this.cols);
+            if (this.getState(cell) === op) {
+                let moves = this.possibleMoves(cell);
+                if (moves.some(elem => elem.equals(king))) {
+                    return true;
+                }
+            }
+            return false;
+        });
+    }
+    showPossibleMoves(cell) {
+        let pm = this.possibleMoves(cell);
+        let { x, y } = cell;
+        let ret = [];
+        let chess = new Chess();
+        for (let m of pm) {
+            let { x: dr, y: dc } = m;
+            let boardCopy = Array(this.rows).fill().map(() => Array(this.cols).fill());
+            for (let i = 0; i < this.board.length; i++) {
+                for (let j = 0; j < this.board[i].length; j++) {
+                    let temp = this.board[i][j];
+                    boardCopy[i][j] = new CellState(temp.getState(), temp.getPiece());
+                }
+            }
+            boardCopy[dr][dc] = boardCopy[x][y];
+            boardCopy[x][y] = new CellState(State.EMPTY);
+            chess.board = boardCopy;
+            chess.turn = this.turn;
+            if (!chess.isCheck()) {
+                ret.push(m);
+            }
+        }
+        return ret;
     }
 }
