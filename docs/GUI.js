@@ -46,7 +46,7 @@ class GUI {
             this.origin = td;
             this.showPossibleMoves(this.origin);
         } else {
-            this.innerPlay(this.origin, td);
+            this.innerPlay(this.origin, td, true);
         }
     }
     drag(evt) {
@@ -58,19 +58,33 @@ class GUI {
     }
     drop(evt) {
         evt.preventDefault();
-        this.innerPlay(this.origin, evt.currentTarget);
+        this.innerPlay(this.origin, evt.currentTarget, false);
     }
-    innerPlay(beginCell, endCell) {
+    innerPlay(beginCell, endCell, animation) {
         this.hidePossibleMoves();
         let begin = this.coordinates(beginCell);
         let end = this.coordinates(endCell);
         try {
             this.game.move(begin, end);
             let image = beginCell.firstChild;
-            endCell.innerHTML = "";
-            endCell.appendChild(image);
+            let moveImage = () => {
+                endCell.innerHTML = "";
+                endCell.appendChild(image);
+            };
+            if (animation) {
+                const time = 1000;
+                let { x: or, y: oc } = begin;
+                let { x: dr, y: dc } = end;
+                let td = document.querySelector("td");
+                let size = td.offsetWidth;
+                let anim = image.animate([{ top: 0, left: 0 }, { top: `${(dr - or) * size}px`, left: `${(dc - oc) * size}px` }], time);
+                anim.onfinish = moveImage;
+                endCell.firstChild?.animate([{ opacity: 1 }, { opacity: 0 }], time);
+            } else {
+                moveImage();
+            }
             this.changeMessage();
-        } catch(ex) {
+        } catch (ex) {
             this.setMessage(ex.message);
         }
         this.origin = null;
@@ -79,7 +93,7 @@ class GUI {
         let coords = this.coordinates(cell);
         let moves = this.game.possibleMoves(coords);
         moves.push(coords);
-        for (let {x, y} of moves) {
+        for (let { x, y } of moves) {
             let tempCell = document.querySelector(`tr:nth-child(${x + 1}) td:nth-child(${y + 1})`);
             tempCell.className = 'selected';
         }
