@@ -71,21 +71,30 @@ class GUI {
         try {
             this.game.move(begin, end);
             let image = beginCell.firstChild;
-            let moveImage = () => {
-                endCell.innerHTML = "";
-                endCell.appendChild(image);
+            const time = 1000;
+            let moveImage = (destinationCell, piece) => {
+                destinationCell.innerHTML = "";
+                destinationCell.appendChild(piece);
             };
-            if (animation) {
-                const time = 1000;
-                let { x: or, y: oc } = begin;
-                let { x: dr, y: dc } = end;
+            let animatePiece = (startPosition, endPosition) => {
+                let piece = this.getTableData(startPosition).firstChild;
+                let {x: a, y: b} = startPosition;
+                let {x: c, y: d} = endPosition;
                 let td = document.querySelector("td");
                 let size = td.offsetWidth;
-                let anim = image.animate([{ top: 0, left: 0 }, { top: `${(dr - or) * size}px`, left: `${(dc - oc) * size}px` }], time);
-                anim.onfinish = moveImage;
+                let anim = piece.animate([{ top: 0, left: 0 }, { top: `${(c - a) * size}px`, left: `${(d - b) * size}px` }], time);
+                anim.onfinish = () => moveImage(this.getTableData(endPosition), piece);
+            };
+            if (animation) {
+                animatePiece(begin, end);
                 endCell.firstChild?.animate([{ opacity: 1 }, { opacity: 0 }], time);
             } else {
-                moveImage();
+                moveImage(endCell, image);
+            }
+            if (this.game.getCastling()) {
+                let rookBegin = this.game.getCastling()[0];
+                let rookEnd = this.game.getCastling()[1];
+                animatePiece(rookBegin, rookEnd);
             }
             this.changeMessage();
         } catch (ex) {
@@ -108,6 +117,10 @@ class GUI {
     hidePossibleMoves() {
         let cells = document.querySelectorAll("td");
         cells.forEach(c => c.className = '');
+    }
+    getTableData( {x, y}) {
+        let table = document.querySelector("table");
+        return table.rows[x].cells[y];
     }
 }
 let gui = new GUI();

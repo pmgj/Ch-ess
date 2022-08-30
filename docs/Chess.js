@@ -9,6 +9,11 @@ export default class Chess {
         this.rows = 8;
         this.cols = 8;
         this.turn = Player.PLAYER1;
+        this.castlingKingsidePlayer1 = true;
+        this.castlingQueensidePlayer1 = true;
+        this.castlingKingsidePlayer2 = true;
+        this.castlingQueensidePlayer2 = true;
+        this.castling = null;
         this.board = [
             [new CellState(State.PLAYER2, Piece.ROOK), new CellState(State.PLAYER2, Piece.KNIGHT),
             new CellState(State.PLAYER2, Piece.BISHOP), new CellState(State.PLAYER2, Piece.QUEEN),
@@ -46,6 +51,9 @@ export default class Chess {
     getTurn() {
         return this.turn;
     }
+    getCastling() {
+        return this.castling;
+    }
     move(beginCell, endCell) {
         let { x: or, y: oc } = beginCell;
         let { x: dr, y: dc } = endCell;
@@ -69,6 +77,8 @@ export default class Chess {
         if (!moves.some(z => z.equals(endCell))) {
             throw new Error("This move is invalid.");
         }
+        this.castling = this.performCastling(beginCell, endCell);
+        this.setCastling(beginCell);
         this.board[dr][dc] = this.board[or][oc];
         this.board[or][oc] = new CellState(State.EMPTY);
         this.turn = (this.turn === Player.PLAYER1) ? Player.PLAYER2 : Player.PLAYER1;
@@ -86,7 +96,7 @@ export default class Chess {
     isEmpty({ x, y }) {
         return this.board[x][y].getState() == State.EMPTY;
     }
-    isKing({x, y}) {
+    isKing({ x, y }) {
         return this.board[x][y].getPiece() == Piece.KING;
     }
     possibleMoves(cell) {
@@ -120,6 +130,13 @@ export default class Chess {
             case Piece.KING:
                 let positions2 = [new Cell(x - 1, y - 1), new Cell(x - 1, y), new Cell(x - 1, y + 1), new Cell(x, y - 1), new Cell(x, y + 1), new Cell(x + 1, y - 1), new Cell(x + 1, y), new Cell(x + 1, y + 1)];
                 addMoves(positions2);
+                let { castlingKing, castlingQueen, row, rook } = this.board[x][y].getState() === State.PLAYER1 ? { castlingKing: this.castlingKingsidePlayer1, castlingQueen: this.castlingQueensidePlayer1, row: 7, rook: new CellState(State.PLAYER1, Piece.ROOK) } : { castlingKing: this.castlingKingsidePlayer2, castlingQueen: this.castlingQueensidePlayer2, row: 0, rook: new CellState(State.PLAYER2, Piece.ROOK) };
+                if (castlingKing && this.board[row][4].equals(this.board[x][y]) && this.isEmpty(new Cell(row, 5)) && this.isEmpty(new Cell(row, 6)) && this.board[row][7].equals(rook)) {
+                    moves.push(new Cell(row, 6));
+                }
+                if (castlingQueen && this.board[row][4].equals(this.board[x][y]) && this.isEmpty(new Cell(row, 3)) && this.isEmpty(new Cell(row, 2)) && this.isEmpty(new Cell(row, 1)) && this.board[row][0].equals(rook)) {
+                    moves.push(new Cell(row, 2));
+                }
                 break;
             case Piece.ROOK:
                 moves = this.rookPositions(cell);
@@ -187,9 +204,16 @@ export default class Chess {
         });
     }
     showPossibleMoves(cell) {
-        let pm = this.possibleMoves(cell);
-        let { x, y } = cell;
         let ret = [];
+        let piece = this.getPiece(cell);
+        if ((piece === State.PLAYER1 && this.turn !== Player.PLAYER1)
+            || (piece === State.PLAYER2 && this.turn !== Player.PLAYER2)) {
+            return ret;
+        }
+        let pm = this.possibleMoves(cell);
+        let { x: or, y: oc } = cell;
+        let check = this.isCheck();
+        let bIsKing = this.isKing(cell);
         let chess = new Chess();
         for (let m of pm) {
             let { x: dr, y: dc } = m;
@@ -200,14 +224,53 @@ export default class Chess {
                     boardCopy[i][j] = new CellState(temp.getState(), temp.getPiece());
                 }
             }
-            boardCopy[dr][dc] = boardCopy[x][y];
-            boardCopy[x][y] = new CellState(State.EMPTY);
+            boardCopy[dr][dc] = boardCopy[or][oc];
+            boardCopy[or][oc] = new CellState(State.EMPTY);
             chess.board = boardCopy;
             chess.turn = this.turn;
-            if (!chess.isCheck()) {
+            let notInCheckCondition = !chess.isCheck(); // The new movement does not create a check
+            let isTwoStepKing = bIsKing && Math.abs(oc - dc) === 2;
+            let kingNotInCheckCondition = !(isTwoStepKing && check); // Castling is allowed if king is not in check
+            let middleSquareAllowed = ret.some(elem => elem.equals(new Cell(or, (oc + dc) / 2)));
+            let middleSquareNotInCheckCondition = !(isTwoStepKing && !middleSquareAllowed); // Castling is allowed if the king does not pass through a square that is attacked by an enemy piece
+            if (notInCheckCondition && kingNotInCheckCondition && middleSquareNotInCheckCondition) {
                 ret.push(m);
             }
         }
         return ret;
+    }
+    performCastling(beginCell, endCell) {
+        if (!this.isKing(beginCell)) {
+            return null;
+        }
+        let { x: or, y: oc } = beginCell;
+        let { x: dr, y: dc } = endCell;
+        if (Math.abs(dc - oc) === 2) {
+            let a = this.board[or][oc].getState() === State.PLAYER1 ? dr : 0;
+            let { b, c } = dc - oc === 2 ? { b: dc - 1, c: dc + 1 } : { b: dc + 1, c: dc - 2 };
+            this.board[a][b] = this.board[a][c];
+            this.board[a][c] = new CellState(State.EMPTY);
+            return [new Cell(a, c), new Cell(a, b)];
+        }
+        return null;
+    }
+    setCastling(beginCell) {
+        let { x: or, y: oc } = beginCell;
+        if (this.getState(beginCell) == State.PLAYER1) {
+            if (this.isKing(beginCell) || (this.board[or][oc].getPiece() === Piece.ROOK && or === this.rows - 1 && oc === this.cols - 1)) {
+                this.castlingKingsidePlayer1 = false;
+            }
+            if (this.isKing(beginCell) || (this.board[or][oc].getPiece() === Piece.ROOK && or === this.rows - 1 && this.oc === 0)) {
+                this.castlingQueensidePlayer1 = false;
+            }
+        }
+        if (this.getState(beginCell) == State.PLAYER2) {
+            if (this.isKing(beginCell) || (this.board[or][oc].getPiece() === Piece.ROOK && or === 0 && oc === this.cols - 1)) {
+                this.castlingKingsidePlayer2 = false;
+            }
+            if (this.isKing(beginCell) || (this.board[or][oc].getPiece() === Piece.ROOK && or === 0 && oc === 0)) {
+                this.castlingQueensidePlayer2 = false;
+            }
+        }
     }
 }
