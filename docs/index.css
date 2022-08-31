@@ -20,18 +20,31 @@ tr:nth-child(2n) td:nth-child(2n+1) {
     background-color: gray;
 }
 
+td:hover, tr:nth-child(2n+1) td:nth-child(2n):hover,
+tr:nth-child(2n) td:nth-child(2n+1):hover {
+    background-color: lightgray;
+}
+
 img {
     vertical-align: middle;
     position: relative;
     animation-fill-mode: backwards;
 }
 
-#message {
+p {
     text-align: center;
 }
 
 .selected {
     border: 3px solid red;
+}
+
+.hide {
+    display: none;
+}
+
+.show {
+    display: initial;
 }
 
 @media (max-width: 400px) {

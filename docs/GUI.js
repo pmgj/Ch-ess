@@ -1,6 +1,7 @@
 import State from './State.js';
 import Chess from './Chess.js';
 import Cell from './Cell.js';
+import Player from './Player.js';
 
 class GUI {
     constructor() {
@@ -43,7 +44,7 @@ class GUI {
         } else {
             let msgs = { PLAYER1: "White's turn.", PLAYER2: "Black's turn." };
             let msg = msgs[this.game.getTurn()];
-            if (this.game.isCheck(this.game.getTurn())) {
+            if (this.game.isCheck()) {
                 msg = `Check! ${msg}`;
             }
             this.setMessage(msg);
@@ -100,6 +101,32 @@ class GUI {
                 let rookBegin = this.game.getCastling()[0];
                 let rookEnd = this.game.getCastling()[1];
                 animatePiece(rookBegin, rookEnd);
+            }
+            if (this.game.getPromotionCell()) {
+                let select = document.querySelector("select");
+                let option = document.createElement("option");
+                option.textContent = "Select a piece...";
+                select.appendChild(option);
+                for (let piece of this.game.getPromotionList()) {
+                    let option = document.createElement("option");
+                    option.textContent = piece;
+                    select.appendChild(option);
+                }
+                select.className = "show";
+                select.onchange = () => {
+                    if (select.selectedIndex === 0) {
+                        return;
+                    }
+                    this.game.promote(select.value);
+                    select.innerHTML = "";
+                    select.className = "hide";
+
+                    let promotedPiece = this.game.getPromotedPiece();
+                    let cell = this.game.getPromotionCell();
+                    let td = this.getTableData(cell);
+                    td.innerHTML = `<img src="images/${promotedPiece}-${this.game.getTurn() === Player.PLAYER1 ? Player.PLAYER2 : Player.PLAYER1}.svg" alt="" />`;
+                    this.changeMessage(this.game.getWinner());
+                };
             }
             this.changeMessage(this.game.getWinner());
         } catch (ex) {

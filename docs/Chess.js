@@ -16,6 +16,9 @@ export default class Chess {
         this.castlingQueensidePlayer2 = true;
         this.castling = null;
         this.winner = Winner.NONE;
+        this.promotion = false;
+        this.promotionCell = null;
+        this.promotedPiece = null;
         this.board = [
             [new CellState(State.PLAYER2, Piece.ROOK), new CellState(State.PLAYER2, Piece.KNIGHT),
             new CellState(State.PLAYER2, Piece.BISHOP), new CellState(State.PLAYER2, Piece.QUEEN),
@@ -59,7 +62,19 @@ export default class Chess {
     getWinner() {
         return this.winner;
     }
+    getPromotionCell() {
+        return this.promotionCell;
+    }
+    getPromotedPiece() {
+        return this.promotedPiece;
+    }
     move(beginCell, endCell) {
+        if (this.winner !== Winner.NONE) {
+            throw new Error("This game is already finished.");
+        }
+        if (this.promotion) {
+            throw new Error("You must choose a piece to promote.");
+        }
         let { x: or, y: oc } = beginCell;
         let { x: dr, y: dc } = endCell;
         if (!beginCell || !endCell) {
@@ -82,10 +97,20 @@ export default class Chess {
         if (!moves.some(z => z.equals(endCell))) {
             throw new Error("This move is invalid.");
         }
+        /* Castling */
         this.castling = this.performCastling(beginCell, endCell);
         this.setCastling(beginCell);
+        /* Move */
         this.board[dr][dc] = this.board[or][oc];
         this.board[or][oc] = new CellState(State.EMPTY);
+        /* Promotion */
+        if (this.isPawn(endCell) && (dr == 0 || dr == this.rows - 1)) {
+            this.promotion = true;
+            this.promotionCell = endCell;
+            return;
+        }
+        this.promotedPiece = null;
+        this.promotionCell = null;
         this.turn = (this.turn === Player.PLAYER1) ? Player.PLAYER2 : Player.PLAYER1;
         this.winner = this.endOfGame();
     }
@@ -104,6 +129,9 @@ export default class Chess {
     }
     isKing({ x, y }) {
         return this.board[x][y].getPiece() == Piece.KING;
+    }
+    isPawn({ x, y }) {
+        return this.board[x][y].getPiece() == Piece.PAWN;
     }
     possibleMoves(cell) {
         let { x, y } = cell;
@@ -286,5 +314,19 @@ export default class Chess {
             });
         };
         return canMoveSomePiece() ? Winner.NONE : this.isCheck() ? (this.turn == Player.PLAYER1 ? Winner.PLAYER2 : Winner.PLAYER1) : Winner.DRAW;
+    }
+    getPromotionList() {
+        return [Piece.ROOK, Piece.KNIGHT, Piece.BISHOP, Piece.QUEEN];
+    }
+    promote(piece) {
+        if (!this.promotion) {
+            throw new Error("You can not promote a piece right now.");
+        }
+        this.promotedPiece = piece;
+        let { x, y } = this.promotionCell;
+        this.board[x][y] = new CellState(this.turn == Player.PLAYER1 ? State.PLAYER1 : State.PLAYER2, piece);
+        this.promotion = false;
+        this.turn = this.turn == Player.PLAYER1 ? Player.PLAYER2 : Player.PLAYER1;
+        this.winner = this.endOfGame();
     }
 }
