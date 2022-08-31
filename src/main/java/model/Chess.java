@@ -354,14 +354,8 @@ public class Chess {
             }
             return positions;
         };
-        Function<Cell, List<Cell>> rookPositions = c -> {
-            List<Cell> lin = Arrays.asList(new Cell(-1, 0), new Cell(1, 0), new Cell(0, -1), new Cell(0, 1));
-            return selectPositions.apply(c, lin);
-        };
-        Function<Cell, List<Cell>> bishopPositions = c -> {
-            List<Cell> lin = Arrays.asList(new Cell(-1, -1), new Cell(-1, 1), new Cell(1, -1), new Cell(1, 1));
-            return selectPositions.apply(c, lin);
-        };
+        Function<Cell, List<Cell>> rookPositions = c -> selectPositions.apply(c, Arrays.asList(new Cell(-1, 0), new Cell(1, 0), new Cell(0, -1), new Cell(0, 1)));
+        Function<Cell, List<Cell>> bishopPositions = c -> selectPositions.apply(c, Arrays.asList(new Cell(-1, -1), new Cell(-1, 1), new Cell(1, -1), new Cell(1, 1)));
         switch (this.getPiece(cell)) {
             case PAWN:
                 int a, b, c;
