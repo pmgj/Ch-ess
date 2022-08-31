@@ -149,12 +149,10 @@ export default class Chess {
                 }
                 break;
             case Piece.KNIGHT:
-                let positions = [new Cell(x - 2, y - 1), new Cell(x - 2, y + 1), new Cell(x + 2, y - 1), new Cell(x + 2, y + 1), new Cell(x - 1, y - 2), new Cell(x - 1, y + 2), new Cell(x + 1, y - 2), new Cell(x + 1, y + 2)];
-                addMoves(positions);
+                addMoves([new Cell(x - 2, y - 1), new Cell(x - 2, y + 1), new Cell(x + 2, y - 1), new Cell(x + 2, y + 1), new Cell(x - 1, y - 2), new Cell(x - 1, y + 2), new Cell(x + 1, y - 2), new Cell(x + 1, y + 2)]);
                 break;
             case Piece.KING:
-                let positions2 = [new Cell(x - 1, y - 1), new Cell(x - 1, y), new Cell(x - 1, y + 1), new Cell(x, y - 1), new Cell(x, y + 1), new Cell(x + 1, y - 1), new Cell(x + 1, y), new Cell(x + 1, y + 1)];
-                addMoves(positions2);
+                addMoves([new Cell(x - 1, y - 1), new Cell(x - 1, y), new Cell(x - 1, y + 1), new Cell(x, y - 1), new Cell(x, y + 1), new Cell(x + 1, y - 1), new Cell(x + 1, y), new Cell(x + 1, y + 1)]);
                 let { castlingKing, castlingQueen, row, rook } = this.board[x][y].getState() === State.PLAYER1 ? { castlingKing: this.castlingKingsidePlayer1, castlingQueen: this.castlingQueensidePlayer1, row: 7, rook: new CellState(State.PLAYER1, Piece.ROOK) } : { castlingKing: this.castlingKingsidePlayer2, castlingQueen: this.castlingQueensidePlayer2, row: 0, rook: new CellState(State.PLAYER2, Piece.ROOK) };
                 if (castlingKing && this.board[row][4].equals(this.board[x][y]) && this.isEmpty(new Cell(row, 5)) && this.isEmpty(new Cell(row, 6)) && this.board[row][7].equals(rook)) {
                     moves.push(new Cell(row, 6));

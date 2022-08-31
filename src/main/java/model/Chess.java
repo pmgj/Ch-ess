@@ -354,8 +354,10 @@ public class Chess {
             }
             return positions;
         };
-        Function<Cell, List<Cell>> rookPositions = c -> selectPositions.apply(c, Arrays.asList(new Cell(-1, 0), new Cell(1, 0), new Cell(0, -1), new Cell(0, 1)));
-        Function<Cell, List<Cell>> bishopPositions = c -> selectPositions.apply(c, Arrays.asList(new Cell(-1, -1), new Cell(-1, 1), new Cell(1, -1), new Cell(1, 1)));
+        Function<Cell, List<Cell>> rookPositions = c -> selectPositions.apply(c,
+                Arrays.asList(new Cell(-1, 0), new Cell(1, 0), new Cell(0, -1), new Cell(0, 1)));
+        Function<Cell, List<Cell>> bishopPositions = c -> selectPositions.apply(c,
+                Arrays.asList(new Cell(-1, -1), new Cell(-1, 1), new Cell(1, -1), new Cell(1, 1)));
         switch (this.getPiece(cell)) {
             case PAWN:
                 int a, b, c;
@@ -399,16 +401,14 @@ public class Chess {
                 }
                 break;
             case KNIGHT:
-                List<Cell> positions = Arrays.asList(new Cell(x - 2, y - 1), new Cell(x - 2, y + 1),
+                addMoves.accept(Arrays.asList(new Cell(x - 2, y - 1), new Cell(x - 2, y + 1),
                         new Cell(x + 2, y - 1), new Cell(x + 2, y + 1), new Cell(x - 1, y - 2), new Cell(x - 1, y + 2),
-                        new Cell(x + 1, y - 2), new Cell(x + 1, y + 2));
-                addMoves.accept(positions);
+                        new Cell(x + 1, y - 2), new Cell(x + 1, y + 2)));
                 break;
             case KING:
-                List<Cell> positions2 = Arrays.asList(
+                addMoves.accept(Arrays.asList(
                         new Cell(x - 1, y - 1), new Cell(x - 1, y), new Cell(x - 1, y + 1), new Cell(x, y - 1),
-                        new Cell(x, y + 1), new Cell(x + 1, y - 1), new Cell(x + 1, y), new Cell(x + 1, y + 1));
-                addMoves.accept(positions2);
+                        new Cell(x, y + 1), new Cell(x + 1, y - 1), new Cell(x + 1, y), new Cell(x + 1, y + 1)));
                 boolean castlingKing, castlingQueen;
                 int row;
                 CellState rook;
