@@ -91,11 +91,21 @@ class GUI {
                 let anim = piece.animate([{ top: 0, left: 0 }, { top: `${(c - a) * size}px`, left: `${(d - b) * size}px` }], time);
                 anim.onfinish = () => moveImage(this.getTableData(endPosition), piece);
             };
+            let enPassant = this.game.getEnPassant();
+            let enPassantCell = enPassant ? this.getTableData(enPassant) : null;
+            let opponentImage = enPassantCell?.firstChild ?? endCell.firstChild;
             if (animation) {
                 animatePiece(begin, end);
-                endCell.firstChild?.animate([{ opacity: 1 }, { opacity: 0 }], time);
             } else {
                 moveImage(endCell, image);
+            }
+            if (opponentImage) {
+                let anim = opponentImage.animate([{ opacity: 1 }, { opacity: 0 }], time);
+                anim.onfinish = () => {
+                    if (enPassantCell) {
+                        enPassantCell.innerHTML = "";
+                    }
+                };
             }
             if (this.game.getCastling()) {
                 let rookBegin = this.game.getCastling()[0];

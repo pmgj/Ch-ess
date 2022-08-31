@@ -19,6 +19,7 @@ export default class Chess {
         this.promotion = false;
         this.promotionCell = null;
         this.promotedPiece = null;
+        this.enPassant = null;
         this.board = [
             [new CellState(State.PLAYER2, Piece.ROOK), new CellState(State.PLAYER2, Piece.KNIGHT),
             new CellState(State.PLAYER2, Piece.BISHOP), new CellState(State.PLAYER2, Piece.QUEEN),
@@ -97,6 +98,20 @@ export default class Chess {
         if (!moves.some(z => z.equals(endCell))) {
             throw new Error("This move is invalid.");
         }
+        /* En passant */
+        if (this.isPawn(beginCell) && Math.abs(or - dr) === 1 && Math.abs(oc - dc) === 1 && this.isEmpty(endCell)) {
+            let { x: tx, y: ty } = this.enPassant;
+            this.board[tx][ty] = new CellState(State.EMPTY);
+        } else {
+            this.enPassant = null;
+        }
+        if (this.isPawn(beginCell)) {
+            let p1 = this.board[or][oc].getState() == State.PLAYER1 && or == 6 && dr == 4;
+            let p2 = this.board[or][oc].getState() == State.PLAYER2 && or == 1 && dr == 3;
+            if (p1 || p2) {
+                this.enPassant = endCell;
+            }
+        }
         /* Castling */
         this.castling = this.performCastling(beginCell, endCell);
         this.setCastling(beginCell);
@@ -132,6 +147,9 @@ export default class Chess {
     }
     isPawn({ x, y }) {
         return this.board[x][y].getPiece() == Piece.PAWN;
+    }
+    getEnPassant() {
+        return this.enPassant && this.isEmpty(this.enPassant) ? this.enPassant : null;
     }
     possibleMoves(cell) {
         let { x, y } = cell;
@@ -174,6 +192,14 @@ export default class Chess {
                 tempCell = new Cell(a, y + 1);
                 if (this.onBoard(tempCell) && this.getState(tempCell) === d) {
                     moves.push(tempCell);
+                }
+                tempCell = new Cell(x, y - 1);
+                if (this.enPassant && this.onBoard(tempCell) && this.board[x][y - 1].getPiece() === Piece.PAWN && tempCell.equals(this.enPassant)) {
+                    moves.push(new Cell(a, y - 1));
+                }
+                tempCell = new Cell(x, y + 1);
+                if (this.enPassant && this.onBoard(tempCell) && this.board[x][y + 1].getPiece() === Piece.PAWN && tempCell.equals(this.enPassant)) {
+                    moves.push(new Cell(a, y + 1));
                 }
                 break;
             case Piece.KNIGHT:
