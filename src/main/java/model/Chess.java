@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class Chess {
@@ -230,30 +232,24 @@ public class Chess {
         this.winner = this.endOfGame();
     }
 
-    /* Verify end of game condition */
     private Winner endOfGame() {
-        /* If is a check mate, the game ends */
-        boolean noMove = this.cannotMoveAnyPiece();
-        if (!noMove) {
-            return Winner.NONE;
-        }
-        return this.isCheck() ? (this.turn == Player.PLAYER1 ? Winner.PLAYER2 : Winner.PLAYER1) : Winner.DRAW;
-    }
-
-    private boolean cannotMoveAnyPiece() {
-        State cs = this.turn == Player.PLAYER1 ? State.PLAYER1 : State.PLAYER2;
-        for (int i = 0; i < this.rows; i++) {
-            for (int j = 0; j < this.cols; j++) {
-                Cell cell = new Cell(i, j);
-                if (this.getState(cell) == cs) {
-                    List<Cell> moves = this.showPossibleMoves(cell);
-                    if (!moves.isEmpty()) {
-                        return false;
+        Supplier<Boolean> canMoveSomePiece = () -> {
+            State cs = this.turn == Player.PLAYER1 ? State.PLAYER1 : State.PLAYER2;
+            for (int i = 0; i < this.rows; i++) {
+                for (int j = 0; j < this.cols; j++) {
+                    Cell cell = new Cell(i, j);
+                    if (this.getState(cell) == cs) {
+                        List<Cell> moves = this.showPossibleMoves(cell);
+                        if (!moves.isEmpty()) {
+                            return true;
+                        }
                     }
                 }
             }
-        }
-        return true;
+            return false;
+        };
+        return canMoveSomePiece.get() ? Winner.NONE
+                : this.isCheck() ? (this.turn == Player.PLAYER1 ? Winner.PLAYER2 : Winner.PLAYER1) : Winner.DRAW;
     }
 
     public boolean isCheck() {
@@ -339,6 +335,33 @@ public class Chess {
         Consumer<List<Cell>> addMoves = positions -> moves.addAll(
                 positions.stream().filter(temp -> this.onBoard(temp) && this.getState(temp) != this.getState(cell))
                         .collect(Collectors.toList()));
+        BiFunction<Cell, List<Cell>, List<Cell>> selectPositions = (c, directions) -> {
+            List<Cell> positions = new ArrayList<>();
+            int row = c.getX(), col = c.getY();
+            State piece = this.getState(c);
+            for (Cell dir : directions) {
+                int xDir = dir.getX(), yDir = dir.getY();
+                Cell temp;
+                for (int k = row + xDir, l = col + yDir; this.onBoard(temp = new Cell(k, l)); k += xDir, l += yDir) {
+                    State tempPiece = this.getState(temp);
+                    if (tempPiece == State.EMPTY || piece != tempPiece) {
+                        positions.add(temp);
+                    }
+                    if (tempPiece != State.EMPTY) {
+                        break;
+                    }
+                }
+            }
+            return positions;
+        };
+        Function<Cell, List<Cell>> rookPositions = c -> {
+            List<Cell> lin = Arrays.asList(new Cell(-1, 0), new Cell(1, 0), new Cell(0, -1), new Cell(0, 1));
+            return selectPositions.apply(c, lin);
+        };
+        Function<Cell, List<Cell>> bishopPositions = c -> {
+            List<Cell> lin = Arrays.asList(new Cell(-1, -1), new Cell(-1, 1), new Cell(1, -1), new Cell(1, 1));
+            return selectPositions.apply(c, lin);
+        };
         switch (this.getPiece(cell)) {
             case PAWN:
                 int a, b, c;
@@ -419,48 +442,18 @@ public class Chess {
                 }
                 break;
             case ROOK:
-                moves.addAll(rookPositions(cell));
+                moves.addAll(rookPositions.apply(cell));
                 break;
             case BISHOP:
-                moves.addAll(bishopPositions(cell));
+                moves.addAll(bishopPositions.apply(cell));
                 break;
             case QUEEN:
-                List<Cell> dg = this.bishopPositions(cell);
-                List<Cell> hv = this.rookPositions(cell);
+                List<Cell> dg = bishopPositions.apply(cell);
+                List<Cell> hv = rookPositions.apply(cell);
                 moves.addAll(dg);
                 moves.addAll(hv);
         }
         return moves;
-    }
-
-    private List<Cell> selectPositions(Cell cell, List<Cell> directions) {
-        List<Cell> moves = new ArrayList<>();
-        int row = cell.getX(), col = cell.getY();
-        State piece = this.getState(cell);
-        for (Cell dir : directions) {
-            int x = dir.getX(), y = dir.getY();
-            Cell c;
-            for (int k = row + x, l = col + y; this.onBoard(c = new Cell(k, l)); k += x, l += y) {
-                State tempPiece = this.getState(c);
-                if (tempPiece == State.EMPTY || piece != tempPiece) {
-                    moves.add(c);
-                }
-                if (tempPiece != State.EMPTY) {
-                    break;
-                }
-            }
-        }
-        return moves;
-    }
-
-    private List<Cell> rookPositions(Cell cell) {
-        List<Cell> lin = Arrays.asList(new Cell(-1, 0), new Cell(1, 0), new Cell(0, -1), new Cell(0, 1));
-        return this.selectPositions(cell, lin);
-    }
-
-    private List<Cell> bishopPositions(Cell cell) {
-        List<Cell> lin = Arrays.asList(new Cell(-1, -1), new Cell(-1, 1), new Cell(1, -1), new Cell(1, 1));
-        return this.selectPositions(cell, lin);
     }
 
     public void printBoard() {

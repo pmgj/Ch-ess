@@ -3,6 +3,7 @@ import State from './State.js';
 import Piece from './Piece.js';
 import Player from './Player.js';
 import Cell from './Cell.js';
+import Winner from './Winner.js';
 
 export default class Chess {
     constructor() {
@@ -14,6 +15,7 @@ export default class Chess {
         this.castlingKingsidePlayer2 = true;
         this.castlingQueensidePlayer2 = true;
         this.castling = null;
+        this.winner = Winner.NONE;
         this.board = [
             [new CellState(State.PLAYER2, Piece.ROOK), new CellState(State.PLAYER2, Piece.KNIGHT),
             new CellState(State.PLAYER2, Piece.BISHOP), new CellState(State.PLAYER2, Piece.QUEEN),
@@ -54,6 +56,9 @@ export default class Chess {
     getCastling() {
         return this.castling;
     }
+    getWinner() {
+        return this.winner;
+    }
     move(beginCell, endCell) {
         let { x: or, y: oc } = beginCell;
         let { x: dr, y: dc } = endCell;
@@ -82,6 +87,7 @@ export default class Chess {
         this.board[dr][dc] = this.board[or][oc];
         this.board[or][oc] = new CellState(State.EMPTY);
         this.turn = (this.turn === Player.PLAYER1) ? Player.PLAYER2 : Player.PLAYER1;
+        this.winner = this.endOfGame();
     }
     getState({ x, y }) {
         return this.board[x][y].getState();
@@ -103,6 +109,25 @@ export default class Chess {
         let { x, y } = cell;
         let moves = [], tempCell;
         let addMoves = positions => moves.push(...positions.filter(temp => this.onBoard(temp) && this.getState(temp) !== this.getState(cell)));
+        let selectPositions = (cell, directions) => {
+            let moves = [];
+            let { x: row, y: col } = cell;
+            let piece = this.getState(cell);
+            for (let { x, y } of directions) {
+                for (let k = row + x, l = col + y, c = new Cell(k, l); this.onBoard(c); k += x, l += y, c = new Cell(k, l)) {
+                    let tempPiece = this.getState(c);
+                    if (tempPiece === State.EMPTY || piece !== tempPiece) {
+                        moves.push(c);
+                    }
+                    if (tempPiece !== State.EMPTY) {
+                        break;
+                    }
+                }
+            }
+            return moves;
+        }
+        let rookPositions = cell => selectPositions(cell, [{ x: -1, y: 0 }, { x: 1, y: 0 }, { x: 0, y: -1 }, { x: 0, y: 1 }]);
+        let bishopPositions = cell => selectPositions(cell, [{ x: -1, y: -1 }, { x: -1, y: 1 }, { x: 1, y: -1 }, { x: 1, y: 1 }]);
         switch (this.getPiece(cell)) {
             case Piece.PAWN:
                 let { a, b, c, d } = this.board[x][y].getState() === State.PLAYER1 ? { a: x - 1, b: x - 2, c: 6, d: State.PLAYER2 } : { a: x + 1, b: x + 2, c: 1, d: State.PLAYER1 };
@@ -139,43 +164,18 @@ export default class Chess {
                 }
                 break;
             case Piece.ROOK:
-                moves = this.rookPositions(cell);
+                moves = rookPositions(cell);
                 break;
             case Piece.BISHOP:
-                moves = this.bishopPositions(cell);
+                moves = bishopPositions(cell);
                 break;
             case Piece.QUEEN:
-                let dg = this.bishopPositions(cell);
-                let hv = this.rookPositions(cell);
+                let dg = bishopPositions(cell);
+                let hv = rookPositions(cell);
                 moves = dg.concat(hv);
                 break;
         }
         return moves;
-    }
-    selectPositions(cell, directions) {
-        let moves = [];
-        let { x: row, y: col } = cell;
-        let piece = this.getState(cell);
-        for (let { x, y } of directions) {
-            for (let k = row + x, l = col + y, c = new Cell(k, l); this.onBoard(c); k += x, l += y, c = new Cell(k, l)) {
-                let tempPiece = this.getState(c);
-                if (tempPiece === State.EMPTY || piece !== tempPiece) {
-                    moves.push(c);
-                }
-                if (tempPiece !== State.EMPTY) {
-                    break;
-                }
-            }
-        }
-        return moves;
-    }
-    rookPositions(cell) {
-        let lin = [{ x: -1, y: 0 }, { x: 1, y: 0 }, { x: 0, y: -1 }, { x: 0, y: 1 }];
-        return this.selectPositions(cell, lin);
-    }
-    bishopPositions(cell) {
-        let lin = [{ x: -1, y: -1 }, { x: -1, y: 1 }, { x: 1, y: -1 }, { x: 1, y: 1 }];
-        return this.selectPositions(cell, lin);
     }
     getKing(state) {
         for (let i = 0; i < this.rows; i++) {
@@ -272,5 +272,21 @@ export default class Chess {
                 this.castlingQueensidePlayer2 = false;
             }
         }
+    }
+    endOfGame() {
+        let canMoveSomePiece = () => {
+            let cs = this.turn === Player.PLAYER1 ? State.PLAYER1 : State.PLAYER2;
+            return this.board.flat().some((e, i) => {
+                let cell = new Cell(Math.floor(i / this.cols), i % this.cols);
+                if (this.getState(cell) === cs) {
+                    let moves = this.showPossibleMoves(cell);
+                    if (moves.length > 0) {
+                        return true;
+                    }
+                }
+                return false;
+            });
+        };
+        return canMoveSomePiece() ? Winner.NONE : this.isCheck() ? (this.turn == Player.PLAYER1 ? Winner.PLAYER2 : Winner.PLAYER1) : Winner.DRAW;
     }
 }

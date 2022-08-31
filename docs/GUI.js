@@ -36,13 +36,18 @@ class GUI {
         let msg = document.getElementById("message");
         msg.textContent = message;
     }
-    changeMessage() {
-        let msgs = { PLAYER1: "White's turn.", PLAYER2: "Black's turn." };
-        let msg = msgs[this.game.getTurn()];
-        if (this.game.isCheck(this.game.getTurn())) {
-            msg = `Check! ${msg}`;
+    changeMessage(m) {
+        let objs = { DRAW: "Draw!", PLAYER2: "Black's win!", PLAYER1: "White's win!" };
+        if (objs[m]) {
+            this.setMessage(`Game Over! ${objs[m]}`);
+        } else {
+            let msgs = { PLAYER1: "White's turn.", PLAYER2: "Black's turn." };
+            let msg = msgs[this.game.getTurn()];
+            if (this.game.isCheck(this.game.getTurn())) {
+                msg = `Check! ${msg}`;
+            }
+            this.setMessage(msg);
         }
-        this.setMessage(msg);
     }
     play(evt) {
         let td = evt.currentTarget;
@@ -78,8 +83,8 @@ class GUI {
             };
             let animatePiece = (startPosition, endPosition) => {
                 let piece = this.getTableData(startPosition).firstChild;
-                let {x: a, y: b} = startPosition;
-                let {x: c, y: d} = endPosition;
+                let { x: a, y: b } = startPosition;
+                let { x: c, y: d } = endPosition;
                 let td = document.querySelector("td");
                 let size = td.offsetWidth;
                 let anim = piece.animate([{ top: 0, left: 0 }, { top: `${(c - a) * size}px`, left: `${(d - b) * size}px` }], time);
@@ -96,7 +101,7 @@ class GUI {
                 let rookEnd = this.game.getCastling()[1];
                 animatePiece(rookBegin, rookEnd);
             }
-            this.changeMessage();
+            this.changeMessage(this.game.getWinner());
         } catch (ex) {
             this.setMessage(ex.message);
         }
@@ -118,7 +123,7 @@ class GUI {
         let cells = document.querySelectorAll("td");
         cells.forEach(c => c.className = '');
     }
-    getTableData( {x, y}) {
+    getTableData({ x, y }) {
         let table = document.querySelector("table");
         return table.rows[x].cells[y];
     }
