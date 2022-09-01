@@ -24,6 +24,12 @@ tr:nth-child(2n) td:nth-child(2n+1):hover {
     background-color: lightgray;
 }
 
+img {
+    vertical-align: middle;
+    position: relative;
+    animation-fill-mode: backwards;
+}
+
 .selected {
     border: 3px solid red;
 }

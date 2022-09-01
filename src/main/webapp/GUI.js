@@ -48,37 +48,8 @@ class GUI {
         }
         // changeMessage();
     }
-    piecePlayer(row, col) {
-        if (col === undefined) {
-            col = row.cellIndex;
-            row = row.parentNode.rowIndex;
-        }
-        let cell = this.table.rows[row].cells[col];
-        let img = cell.firstChild;
-        if (img) {
-            if (img.src.indexOf("PLAYER1") !== -1) {
-                return State.PLAYER1;
-            } else {
-                return State.PLAYER2;
-            }
-        } else {
-            return State.EMPTY;
-        }
-    }
     getTableData({ x, y }) {
         return this.table.rows[x].cells[y];
-    }
-    movePiece(begin, end) {
-        if (!begin || !end) {
-            return;
-        }
-        let bTD = this.getTableData(this.getCorrectCell(begin));
-        let eTD = this.getTableData(this.getCorrectCell(end));
-        if (eTD.firstChild) {
-            eTD.removeChild(eTD.firstChild);
-        }
-        let img = bTD.firstChild;
-        eTD.appendChild(img);
     }
     coordinates(tableData) {
         return new Cell(tableData.parentNode.rowIndex, tableData.cellIndex);
@@ -142,34 +113,66 @@ class GUI {
                 this.showPossibleMoves(data.possibleMoves);
                 break;
             case ConnectionType.MOVE_PIECE:
-                if (game.winner === Winner.NONE) {
-                    this.movePiece(data.beginCell, data.endCell);
-                    if (game.enPassant) {
-                        let cell = this.getTableData(this.getCorrectCell(game.enPassant));
-                        cell.removeChild(cell.firstChild);
-                    }
-                    if (game.castling) {
-                        this.movePiece(game.castling[0], game.castling[1]);
-                    }
-                    if (this.player === game.turn && game.promotionCell) {
-                        let select = document.querySelector("select");
-                        for (let piece of game.promotionList) {
-                            let option = document.createElement("option");
-                            option.textContent = piece;
-                            select.appendChild(option);
+                const time = 1000;
+                let moveImage = (destinationCell, piece) => {
+                    destinationCell.innerHTML = "";
+                    destinationCell.appendChild(piece);
+                };
+                let animatePiece = (startPosition, endPosition) => {
+                    let startCell = this.getCorrectCell(startPosition);
+                    let endCell = this.getCorrectCell(endPosition);
+                    let bTD = this.getTableData(startCell);
+                    let eTD = this.getTableData(endCell);
+                    let piece = bTD.firstChild;
+                    let { x: a, y: b } = startCell;
+                    let { x: c, y: d } = endCell;
+                    let td = document.querySelector("td");
+                    let size = td.offsetWidth;
+                    let anim = piece.animate([{ top: 0, left: 0 }, { top: `${(c - a) * size}px`, left: `${(d - b) * size}px` }], time);
+                    anim.onfinish = () => moveImage(eTD, piece);
+                };
+                animatePiece(data.beginCell, data.endCell);
+                let enPassant = game.enPassant;
+                let enPassantCell = enPassant ? this.getTableData(this.getCorrectCell(enPassant)) : null;
+                let endCell = this.getCorrectCell(data.endCell);
+                let eTD = this.getTableData(endCell);
+                let opponentImage = enPassantCell?.firstChild ?? eTD.firstChild;
+                if (opponentImage) {
+                    let anim = opponentImage.animate([{ opacity: 1 }, { opacity: 0 }], time);
+                    anim.onfinish = () => {
+                        if (enPassantCell) {
+                            enPassantCell.innerHTML = "";
                         }
-                        select.className = "show";
-                        select.onchange = () => {
-                            this.ws.send(JSON.stringify({ promote: select.value }));
-                            select.innerHTML = "";
-                            select.className = "hide";
-                        };
+                    };
+                }
+                if (game.castling) {
+                    animatePiece(game.castling[0], game.castling[1]);
+                }
+                if (this.player === game.turn && game.promotionCell) {
+                    let select = document.querySelector("select");
+                    let option = document.createElement("option");
+                    option.textContent = "Select a piece...";
+                    select.appendChild(option);
+                    for (let piece of game.promotionList) {
+                        let option = document.createElement("option");
+                        option.textContent = piece;
+                        select.appendChild(option);
                     }
+                    select.className = "show";
+                    select.onchange = () => {
+                        if (select.selectedIndex === 0) {
+                            return;
+                        }
+                        this.ws.send(JSON.stringify({ promote: select.value }));
+                        select.innerHTML = "";
+                        select.className = "hide";
+                    };
+                }
+                if (game.winner === Winner.NONE) {
                     let check = game.check ? "Check!" : "";
                     this.writeResponse(this.player === game.turn ? `${check} It's your turn.` : `${check} Wait for your turn.`);
                 } else {
                     this.endGame(this.closeCodes.ENDGAME, game.winner);
-                    this.movePiece(data.beginCell, data.endCell);
                 }
                 break;
             case ConnectionType.PROMOTED_PIECE:
