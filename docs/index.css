@@ -9,8 +9,6 @@ table {
 }
 
 td {
-    width: 49px;
-    height: 49px;
     border: 3px solid black;
     text-align: center;
 }
@@ -31,6 +29,12 @@ img {
     animation-fill-mode: backwards;
 }
 
+td, img {
+    --cell-size: 8vmin;
+    width: clamp(30px, var(--cell-size), 50px);
+    height: clamp(30px, var(--cell-size), 50px);
+}
+
 p {
     text-align: center;
 }
@@ -45,13 +49,4 @@ p {
 
 .show {
     display: initial;
-}
-
-@media (max-width: 400px) {
-    td, img {
-        width: 30px;
-        height: 30px;
-        min-width: 30px;
-        min-height: 30px;
-    }
 }
