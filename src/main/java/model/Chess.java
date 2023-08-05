@@ -85,36 +85,36 @@ public class Chess {
     }
 
     private State getState(Cell cell) {
-        return this.board[cell.getX()][cell.getY()].getState();
+        return this.board[cell.x()][cell.y()].getState();
     }
 
     private Piece getPiece(Cell cell) {
-        return this.board[cell.getX()][cell.getY()].getPiece();
+        return this.board[cell.x()][cell.y()].getPiece();
     }
 
     private boolean onBoard(Cell cell) {
         BiFunction<Integer, Integer, Boolean> inLimit = (value, limit) -> value >= 0 && value < limit;
-        return (inLimit.apply(cell.getX(), rows) && inLimit.apply(cell.getY(), cols));
+        return (inLimit.apply(cell.x(), rows) && inLimit.apply(cell.y(), cols));
     }
 
     private boolean isEmpty(Cell cell) {
-        return this.board[cell.getX()][cell.getY()].getState() == State.EMPTY;
+        return this.board[cell.x()][cell.y()].getState() == State.EMPTY;
     }
 
     private boolean isKing(Cell cell) {
-        return this.board[cell.getX()][cell.getY()].getPiece() == Piece.KING;
+        return this.board[cell.x()][cell.y()].getPiece() == Piece.KING;
     }
 
     private boolean isPawn(Cell cell) {
-        return this.board[cell.getX()][cell.getY()].getPiece() == Piece.PAWN;
+        return this.board[cell.x()][cell.y()].getPiece() == Piece.PAWN;
     }
 
     private List<Cell> performCastling(Cell beginCell, Cell endCell) {
         if (!this.isKing(beginCell)) {
             return null;
         }
-        int or = beginCell.getX(), oc = beginCell.getY();
-        int dr = endCell.getX(), dc = endCell.getY();
+        int or = beginCell.x(), oc = beginCell.y();
+        int dr = endCell.x(), dc = endCell.y();
         if (Math.abs(dc - oc) == 2) {
             int a = this.board[or][oc].getState() == State.PLAYER1 ? dr : 0;
             int b = dc - oc == 2 ? dc - 1 : dc + 1;
@@ -127,7 +127,7 @@ public class Chess {
     }
 
     private void setCastling(Cell beginCell) {
-        int or = beginCell.getX(), oc = beginCell.getY();
+        int or = beginCell.x(), oc = beginCell.y();
         if (this.getState(beginCell) == State.PLAYER1) {
             if (this.isKing(beginCell)
                     || (this.board[or][oc].getPiece() == Piece.ROOK && or == rows - 1 && oc == cols - 1)) {
@@ -170,8 +170,8 @@ public class Chess {
         if (beginCell == null || endCell == null) {
             throw new Exception("Origin or destination cell does not exist.");
         }
-        int or = beginCell.getX(), oc = beginCell.getY();
-        int dr = endCell.getX(), dc = endCell.getY();
+        int or = beginCell.x(), oc = beginCell.y();
+        int dr = endCell.x(), dc = endCell.y();
         State currentPiece = getState(beginCell);
         /* É a sua vez de jogar */
         if (this.turn != player) {
@@ -202,7 +202,7 @@ public class Chess {
         /* Armazenar peça para possível en passant */
         if (this.isPawn(beginCell) && Math.abs(or - dr) == 1 && Math.abs(oc - dc) == 1
                 && this.isEmpty(endCell)) {
-            int tx = enPassant.getX(), ty = enPassant.getY();
+            int tx = enPassant.x(), ty = enPassant.y();
             this.board[tx][ty] = new CellState(State.EMPTY);
         } else {
             this.enPassant = null;
@@ -276,12 +276,12 @@ public class Chess {
         if ((piece == State.PLAYER1 && this.turn == Player.PLAYER1)
                 || (piece == State.PLAYER2 && this.turn == Player.PLAYER2)) {
             List<Cell> pm = this.possibleMoves(cell);
-            int or = cell.getX(), oc = cell.getY();
+            int or = cell.x(), oc = cell.y();
             boolean check = this.isCheck();
             boolean bIsKing = this.isKing(cell);
             Chess chess = new Chess();
             pm.forEach(m -> {
-                int dr = m.getX(), dc = m.getY();
+                int dr = m.x(), dc = m.y();
 
                 CellState[][] boardCopy = new CellState[this.rows][this.cols];
                 for (int i = 0; i < this.board.length; i++) {
@@ -321,7 +321,7 @@ public class Chess {
             throw new Exception("You can not promote a piece right now.");
         }
         this.promotedPiece = piece;
-        this.board[this.promotionCell.getX()][this.promotionCell.getY()] = new CellState(
+        this.board[this.promotionCell.x()][this.promotionCell.y()] = new CellState(
                 this.turn == Player.PLAYER1 ? State.PLAYER1 : State.PLAYER2, piece);
         this.promotion = false;
         this.turn = this.turn == Player.PLAYER1 ? Player.PLAYER2 : Player.PLAYER1;
@@ -329,7 +329,7 @@ public class Chess {
     }
 
     private List<Cell> possibleMoves(Cell cell) {
-        int x = cell.getX(), y = cell.getY();
+        int x = cell.x(), y = cell.y();
         final List<Cell> moves = new ArrayList<>();
         Cell tempCell;
         Consumer<List<Cell>> addMoves = positions -> moves.addAll(
@@ -337,10 +337,10 @@ public class Chess {
                         .collect(Collectors.toList()));
         BiFunction<Cell, List<Cell>, List<Cell>> selectPositions = (c, directions) -> {
             List<Cell> positions = new ArrayList<>();
-            int row = c.getX(), col = c.getY();
+            int row = c.x(), col = c.y();
             State piece = this.getState(c);
             for (Cell dir : directions) {
-                int xDir = dir.getX(), yDir = dir.getY();
+                int xDir = dir.x(), yDir = dir.y();
                 Cell temp;
                 for (int k = row + xDir, l = col + yDir; this.onBoard(temp = new Cell(k, l)); k += xDir, l += yDir) {
                     State tempPiece = this.getState(temp);
