@@ -98,7 +98,6 @@ class GUI {
     }
     onMessage(evt) {
         let data = JSON.parse(evt.data);
-        console.log(data);
         let game = data.game;
         switch (data.type) {
             case ConnectionType.OPEN:
